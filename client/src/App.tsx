@@ -716,8 +716,8 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
             <h3 className="admin-tab-title">🔐 Admin Security Settings</h3>
             <div className="admin-card">
               <form onSubmit={handleUpdateCredentials} className="admin-settings-form">
-                <div style={{ marginBottom: '1.2rem' }}>
-                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+                <div className="admin-settings-form-group">
+                  <label className="admin-settings-form-label">
                     Admin Email Address
                   </label>
                   <input
@@ -725,22 +725,13 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
                     value={newAdminEmail}
                     onChange={(e) => setNewAdminEmail(e.target.value)}
                     placeholder="admin@aviator.com"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      background: '#0f172a',
-                      border: '1px solid #334155',
-                      borderRadius: '8px',
-                      color: '#f8fafc',
-                      fontSize: '0.9rem',
-                      outline: 'none'
-                    }}
+                    className="admin-settings-form-input"
                     required
                   />
                 </div>
 
-                <div style={{ marginBottom: '1.2rem' }}>
-                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+                <div className="admin-settings-form-group">
+                  <label className="admin-settings-form-label">
                     New Admin Password
                   </label>
                   <input
@@ -748,22 +739,13 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
                     value={newAdminPass}
                     onChange={(e) => setNewAdminPass(e.target.value)}
                     placeholder="Min 6 characters"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      background: '#0f172a',
-                      border: '1px solid #334155',
-                      borderRadius: '8px',
-                      color: '#f8fafc',
-                      fontSize: '0.9rem',
-                      outline: 'none'
-                    }}
+                    className="admin-settings-form-input"
                     required
                   />
                 </div>
 
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+                <div className="admin-settings-form-group" style={{ marginBottom: '1.5rem' }}>
+                  <label className="admin-settings-form-label">
                     Confirm New Password
                   </label>
                   <input
@@ -771,16 +753,7 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
                     value={newAdminConfirmPass}
                     onChange={(e) => setNewAdminConfirmPass(e.target.value)}
                     placeholder="Repeat new password"
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      background: '#0f172a',
-                      border: '1px solid #334155',
-                      borderRadius: '8px',
-                      color: '#f8fafc',
-                      fontSize: '0.9rem',
-                      outline: 'none'
-                    }}
+                    className="admin-settings-form-input"
                     required
                   />
                 </div>
@@ -788,16 +761,10 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
                 <button
                   type="submit"
                   disabled={isUpdatingCreds}
-                  className="admin-btn-action edit"
+                  className="admin-btn-action edit admin-settings-form-submit"
                   style={{
-                    width: '100%',
-                    padding: '0.85rem',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    borderRadius: '8px',
                     cursor: isUpdatingCreds ? 'not-allowed' : 'pointer',
-                    opacity: isUpdatingCreds ? 0.7 : 1,
-                    boxShadow: '0 4px 12px rgba(225, 29, 72, 0.25)'
+                    opacity: isUpdatingCreds ? 0.7 : 1
                   }}
                 >
                   {isUpdatingCreds ? '⏳ Updating Credentials...' : '💾 Save & Apply Credentials'}

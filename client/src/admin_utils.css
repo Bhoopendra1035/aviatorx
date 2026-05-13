@@ -64,3 +64,37 @@
 .margin-top-16 {
   margin-top: 16px;
 }
+
+/* Settings Form CSS */
+.admin-settings-form-group {
+  margin-bottom: 1.2rem;
+}
+.admin-settings-form-label {
+  display: block;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+.admin-settings-form-input {
+  width: 100%;
+  padding: 0.75rem;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  color: #f8fafc;
+  font-size: 0.9rem;
+  outline: none;
+}
+.admin-settings-form-input:focus {
+  border-color: var(--yellow);
+}
+.admin-settings-form-submit {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
+}
+
