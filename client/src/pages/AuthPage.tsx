@@ -53,11 +53,7 @@ export default function AuthPage() {
       const actualPass = tab === 'login' ? passRef.current : regPassRef.current;
       setUser({ name: data.name, email: data.email, isAdmin: data.isAdmin, pass: actualPass });
       setBal(data.bal);
-      if (tab === 'register') {
-        showToast(`Welcome to Aviator, ${data.name}! 🎉 Registration successful!`, 'success');
-      } else {
-        showToast(`Welcome back, ${data.name}! 👋`, 'success');
-      }
+      showToast(`Welcome back, ${data.name}! 👋`, 'success');
     };
 
     const handleLoginError = (data: any) => {
@@ -65,14 +61,27 @@ export default function AuthPage() {
       showToast(`❌ Error: ${data.msg || 'Authentication failed'}`, 'error');
     };
 
+    const handleRegisterSuccess = (data: any) => {
+      showToast(`🎉 ${data.msg || 'Registration successful! Please sign in.'}`, 'success');
+      setTab('login');
+      setEmail(regEmail);
+      setPass(regPass);
+      setName('');
+      setRegEmail('');
+      setRegPass('');
+      setRegPass2('');
+    };
+
     socket.on('loginSuccess', handleLoginSuccess);
     socket.on('loginError', handleLoginError);
+    socket.on('registerSuccess', handleRegisterSuccess);
 
     return () => {
       socket.off('loginSuccess', handleLoginSuccess);
       socket.off('loginError', handleLoginError);
+      socket.off('registerSuccess', handleRegisterSuccess);
     };
-  }, [socket, setUser, setBal, tab, showToast]);
+  }, [socket, setUser, setBal, tab, showToast, regEmail, regPass]);
 
   const doLogin = () => {
     setErr('');
