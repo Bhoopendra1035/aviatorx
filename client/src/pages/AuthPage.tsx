@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../store';
+import { BACKEND_URL } from '../store';
 
 type Tab = 'login' | 'register';
 
 export default function AuthPage() {
   const { setUser, setBal, socket, showToast } = useApp();
   const [tab, setTab] = useState<Tab>('login');
-  const [email, setEmail] = useState('bhoopenadratale77@gmail.com');
+  
+  // Real-time fetched admin credentials
+  const [adminCreds, setAdminCreds] = useState({ email: 'bhoopendratale77@gmail.com', password: 'password123' });
+
+  const [email, setEmail] = useState('bhoopendratale77@gmail.com');
   const [pass, setPass] = useState('password123');
   const [name, setName] = useState('');
   const [regEmail, setRegEmail] = useState('');
@@ -14,10 +19,27 @@ export default function AuthPage() {
   const [regPass2, setRegPass2] = useState('');
   const [err, setErr] = useState('');
 
+  // Load active admin credentials from DB on mount
+  useEffect(() => {
+    fetch(`${BACKEND_URL}/api/auth/admin-credentials`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.email && data.password) {
+          setAdminCreds(data);
+          // Auto-fill login fields with updated email for convenience
+          setEmail(data.email);
+          setPass(data.password);
+        }
+      })
+      .catch(err => console.error('Failed to load admin credentials:', err));
+  }, []);
+
   const doLogin = () => {
     setErr('');
     if (!email || !pass) return setErr('Please fill all fields');
-    const isAdmin = (email === 'admin@aviator.com' || email === 'bhoopenadratale77@gmail.com' || email === 'bhoopendratale77@gmail.com') && pass === 'password123';
+    
+    // Check against live admin credentials
+    const isAdmin = email.toLowerCase().trim() === adminCreds.email.toLowerCase().trim() && pass === adminCreds.password;
     const userName = isAdmin ? 'Admin' : email.split('@')[0];
     const user = { name: userName, email, isAdmin };
     socket.emit('login', { name: userName, isAdmin });
@@ -80,7 +102,7 @@ export default function AuthPage() {
             }}> Play as Guest (Get 500 🪙)</button>
             
             <div className="auth-demo-tip">
-              Demo admin: <strong className="yellow-text">bhoopenadratale77@gmail.com</strong> / <strong className="yellow-text">password123</strong>
+              Demo admin: <strong className="yellow-text">{adminCreds.email}</strong> / <strong className="yellow-text">{adminCreds.password}</strong>
             </div>
           </>
         ) : (

@@ -247,7 +247,7 @@ function HowToPlayModal({ onClose }: { onClose: () => void }) {
 // ─── ADMIN DASHBOARD PANEL ───────────────────────────────────────────────────
 function AdminDashboardModal({ onClose }: { onClose: () => void }) {
   const { socket, adminUsers, adminRounds, gameState, showToast } = useApp();
-  const [activeTab, setActiveTab] = useState<'control' | 'customers' | 'rounds' | 'deposits'>('control');
+  const [activeTab, setActiveTab] = useState<'control' | 'customers' | 'rounds' | 'deposits' | 'settings'>('control');
   const [nextCrash, setNextCrash] = useState('');
   const [pendingDeposits, setPendingDeposits] = useState<any[]>([]);
   
@@ -256,6 +256,12 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
   const [allDbRounds, setAllDbRounds] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Settings tab states
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [newAdminPass, setNewAdminPass] = useState('');
+  const [newAdminConfirmPass, setNewAdminConfirmPass] = useState('');
+  const [isUpdatingCreds, setIsUpdatingCreds] = useState(false);
 
   const fetchFullData = async () => {
     setIsLoading(true);
@@ -288,6 +294,57 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
       socket.off('adminDepositsUpdate');
     };
   }, [socket]);
+
+  // Load current admin config from DB when Settings tab is active
+  useEffect(() => {
+    if (activeTab === 'settings') {
+      fetch(`${BACKEND_URL}/api/auth/admin-credentials`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.email) {
+            setNewAdminEmail(data.email);
+          }
+        })
+        .catch(err => console.error('Failed to load admin email for update:', err));
+    }
+  }, [activeTab]);
+
+  const handleUpdateCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAdminEmail || !newAdminPass) {
+      showToast('⚠️ Please fill out all fields.', 'error');
+      return;
+    }
+    if (newAdminPass !== newAdminConfirmPass) {
+      showToast('⚠️ Passwords do not match.', 'error');
+      return;
+    }
+    if (newAdminPass.length < 6) {
+      showToast('⚠️ Password must be at least 6 characters.', 'error');
+      return;
+    }
+
+    setIsUpdatingCreds(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/update-credentials`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newAdminEmail, password: newAdminPass })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('✅ Admin credentials updated successfully!', 'success');
+        setNewAdminPass('');
+        setNewAdminConfirmPass('');
+      } else {
+        showToast(`❌ Update failed: ${data.error || 'Unknown error'}`, 'error');
+      }
+    } catch (err) {
+      showToast('❌ Server connection error.', 'error');
+    } finally {
+      setIsUpdatingCreds(false);
+    }
+  };
 
   const setTarget = () => {
     const v = parseFloat(nextCrash);
@@ -336,6 +393,9 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
           </button>
           <button className={`admin-tab-btn dep-tab-btn ${activeTab === 'deposits' ? 'active' : ''}`} onClick={() => setActiveTab('deposits')}>
             💰 Deposits {pendingDeposits.length > 0 && <span className="dep-badge">{pendingDeposits.length}</span>}
+          </button>
+          <button className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+            ⚙️ Settings
           </button>
         </div>
 
@@ -645,6 +705,105 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* =========================================================================
+            TAB 5: CREDENTIALS SETTINGS (Update Admin Email & Password)
+           ========================================================================= */}
+        {activeTab === 'settings' && (
+          <div className="admin-tab-content animate-fade-in">
+            <h3 className="admin-tab-title">🔐 Admin Security Settings</h3>
+            <div className="admin-card">
+              <form onSubmit={handleUpdateCredentials} className="admin-settings-form">
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+                    Admin Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={newAdminEmail}
+                    onChange={(e) => setNewAdminEmail(e.target.value)}
+                    placeholder="admin@aviator.com"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      background: '#0f172a',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      color: '#f8fafc',
+                      fontSize: '0.9rem',
+                      outline: 'none'
+                    }}
+                    required
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1.2rem' }}>
+                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+                    New Admin Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newAdminPass}
+                    onChange={(e) => setNewAdminPass(e.target.value)}
+                    placeholder="Min 6 characters"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      background: '#0f172a',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      color: '#f8fafc',
+                      fontSize: '0.9rem',
+                      outline: 'none'
+                    }}
+                    required
+                  />
+                </div>
+
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <label style={{ display: 'block', color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem', fontWeight: 600 }}>
+                    Confirm New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newAdminConfirmPass}
+                    onChange={(e) => setNewAdminConfirmPass(e.target.value)}
+                    placeholder="Repeat new password"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      background: '#0f172a',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                      color: '#f8fafc',
+                      fontSize: '0.9rem',
+                      outline: 'none'
+                    }}
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isUpdatingCreds}
+                  className="admin-btn-action edit"
+                  style={{
+                    width: '100%',
+                    padding: '0.85rem',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    cursor: isUpdatingCreds ? 'not-allowed' : 'pointer',
+                    opacity: isUpdatingCreds ? 0.7 : 1,
+                    boxShadow: '0 4px 12px rgba(225, 29, 72, 0.25)'
+                  }}
+                >
+                  {isUpdatingCreds ? '⏳ Updating Credentials...' : '💾 Save & Apply Credentials'}
+                </button>
+              </form>
+            </div>
           </div>
         )}
 

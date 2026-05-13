@@ -11,6 +11,7 @@ const io = new Server(server, { cors: { origin: '*' } });
 
 // Serve React frontend from client/dist
 app.use(express.static(path.join(__dirname, 'client', 'dist')));
+app.use(express.json());
 
 // ---- DATABASE PERSISTENCE LAYER (MongoDB Atlas / Local Fallback) ----
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/aviator';
@@ -20,6 +21,7 @@ mongoose.connect(MONGO_URI)
     console.log('🍃 MongoDB Atlas connected successfully!');
     loadHistory(); // Load round history from database on start
     loadDeposits(); // Load deposit requests from database on start
+    loadAdminConfig(); // Load admin config from database on start
   })
   .catch(err => {
     console.error('⚠️ MongoDB Atlas connection failed:', err.message);
@@ -50,6 +52,12 @@ const DepositSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 const Deposit = mongoose.model('Deposit', DepositSchema);
+
+const AdminConfigSchema = new mongoose.Schema({
+  email: { type: String, default: 'bhoopendratale77@gmail.com' },
+  password: { type: String, default: 'password123' }
+});
+const AdminConfig = mongoose.model('AdminConfig', AdminConfigSchema);
 
 // ---- DEBUG API ENDPOINT (To view live server & DB state) ----
 app.get('/api/debug-state', async (req, res) => {
@@ -88,6 +96,39 @@ app.get('/api/admin/full-data', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ---- API ENDPOINT TO GET ACTIVE ADMIN CREDENTIALS ----
+app.get('/api/auth/admin-credentials', (req, res) => {
+  res.json({ email: adminCredentials.email, password: adminCredentials.password });
+});
+
+// ---- API ENDPOINT TO UPDATE ADMIN CREDENTIALS ----
+app.post('/api/admin/update-credentials', async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password || password.length < 6) {
+    return res.status(400).json({ success: false, error: 'Invalid email or password (min 6 characters)' });
+  }
+
+  try {
+    if (mongoose.connection.readyState === 1) {
+      let cfg = await AdminConfig.findOne();
+      if (!cfg) {
+        cfg = new AdminConfig({ email, password });
+      } else {
+        cfg.email = email;
+        cfg.password = password;
+      }
+      await cfg.save();
+    }
+    adminCredentials.email = email;
+    adminCredentials.password = password;
+    console.log(`🔐 Admin credentials updated: ${email}`);
+    res.json({ success: true, message: 'Admin credentials updated successfully!' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 
 // ---- GAME STATE ----
 let gameState = { status: 'waiting', mult: 1.0, waitSec: 5, crashPoint: 2.0, roundNum: 1 };
@@ -149,6 +190,24 @@ async function loadDeposits() {
     console.log(`💰 Loaded ${pendingDeposits.length} deposit requests from MongoDB!`);
   } catch (err) {
     console.error('Error loading deposits from Mongo:', err.message);
+  }
+}
+
+// ---- ADMIN CREDENTIALS CONFIG ----
+let adminCredentials = { email: 'bhoopendratale77@gmail.com', password: 'password123' };
+
+async function loadAdminConfig() {
+  if (mongoose.connection.readyState !== 1) return;
+  try {
+    let cfg = await AdminConfig.findOne();
+    if (!cfg) {
+      cfg = new AdminConfig();
+      await cfg.save();
+    }
+    adminCredentials = { email: cfg.email, password: cfg.password };
+    console.log(`🔐 Loaded admin credentials from database! Email: ${adminCredentials.email}`);
+  } catch (err) {
+    console.error('Error loading admin credentials from database:', err.message);
   }
 }
 
