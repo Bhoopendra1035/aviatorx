@@ -16,7 +16,9 @@ app.use(express.json());
 // ---- DATABASE PERSISTENCE LAYER (MongoDB Atlas / Local Fallback) ----
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/aviator';
 
-mongoose.connect(MONGO_URI)
+mongoose.connect(MONGO_URI, {
+  tlsAllowInvalidCertificates: true
+})
   .then(() => {
     console.log('🍃 MongoDB Atlas connected successfully!');
     loadHistory(); // Load round history from database on start
