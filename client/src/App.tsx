@@ -530,7 +530,7 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
                       <tr key={u._id} className="admin-tr-row">
                         <td className="admin-td-name">
                           <span className="admin-customer-name">{u.name}</span>
-                          {u.email && <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>📧 {u.email}</div>}
+                          {u.email && <div className="admin-customer-email">📧 {u.email}</div>}
                           <div className="admin-customer-date">Registered: {new Date(u.createdAt).toLocaleDateString()}</div>
                         </td>
                         <td className="admin-td-bal admin-td-bal-green">
