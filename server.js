@@ -434,51 +434,50 @@ io.on('connection', socket => {
     let dbId = null;
     let liveBal = startBal;
 
-    if (mongoose.connection.readyState === 1) {
-      try {
-        if (isAdmin) {
-          // Admin is dynamically authorized, load or create admin user
-          let adminUser = await User.findOne({ name: 'Admin' });
-          if (!adminUser) {
-            adminUser = new User({ name: 'Admin', bal: 1000, isAdmin: true, email: adminCredentials.email });
-            await adminUser.save();
-          }
-          dbId = adminUser._id;
-          liveBal = adminUser.bal;
-        } else if (uName === 'Guest Player') {
-          dbId = null;
-          liveBal = 500;
-        } else {
-          // Regular player sign-in or register flow
-          if (action === 'register') {
-            // Check if user already exists with this email or name
-            let existing = await User.findOne({ $or: [{ name: uName }, { email: email }] });
-            if (existing) {
-              return socket.emit('loginError', { msg: 'Username or Email already registered' });
-            }
-            // Create user
-            const newUser = new User({ name: uName, email: email, password: pass, bal: 1000, isAdmin: false });
-            await newUser.save();
-            dbId = newUser._id;
-            liveBal = newUser.bal;
-          } else {
-            // Sign in flow: find user by email & password
-            let existing = await User.findOne({ email: email });
-            if (!existing) {
-              return socket.emit('loginError', { msg: 'User does not exist. Please register first!' });
-            }
-            if (existing.password !== pass) {
-              return socket.emit('loginError', { msg: 'Incorrect Password!' });
-            }
-            dbId = existing._id;
-            liveBal = existing.bal;
-            uName = existing.name;
-          }
+    if (mongoose.connection.readyState !== 1) {
+      return socket.emit('loginError', { msg: '⚠️ Database Server is offline or starting up! Please try again in a few seconds.' });
+    }
+
+    try {
+      if (isAdmin) {
+        // Admin is dynamically authorized, load or create admin user
+        let adminUser = await User.findOne({ name: 'Admin' });
+        if (!adminUser) {
+          adminUser = new User({ name: 'Admin', bal: 1000, isAdmin: true, email: adminCredentials.email });
+          await adminUser.save();
         }
-      } catch (err) {
-        console.error('Mongo login/register error:', err.message);
-        return socket.emit('loginError', { msg: 'Database connection error' });
+        dbId = adminUser._id;
+        liveBal = adminUser.bal;
+      } else {
+        // Regular player sign-in or register flow
+        if (action === 'register') {
+          // Check if user already exists with this email or name
+          let existing = await User.findOne({ $or: [{ name: uName }, { email: email }] });
+          if (existing) {
+            return socket.emit('loginError', { msg: '⚠️ This Username or Email is already registered!' });
+          }
+          // Create user
+          const newUser = new User({ name: uName, email: email, password: pass, bal: 1000, isAdmin: false });
+          await newUser.save();
+          dbId = newUser._id;
+          liveBal = newUser.bal;
+        } else {
+          // Sign in flow: find user by email & password
+          let existing = await User.findOne({ email: email });
+          if (!existing) {
+            return socket.emit('loginError', { msg: '⚠️ Account not found! Please REGISTER first before trying to sign in.' });
+          }
+          if (existing.password !== pass) {
+            return socket.emit('loginError', { msg: '❌ Incorrect Password! Please try again.' });
+          }
+          dbId = existing._id;
+          liveBal = existing.bal;
+          uName = existing.name;
+        }
       }
+    } catch (err) {
+      console.error('Mongo login/register error:', err.message);
+      return socket.emit('loginError', { msg: '⚠️ Database authentication error occurred. Please try again.' });
     }
 
     users[socket.id] = {
