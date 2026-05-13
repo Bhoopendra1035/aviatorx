@@ -61,12 +61,24 @@ export default function AuthPage() {
       showToast(`❌ Error: ${data.msg || 'Authentication failed'}`, 'error');
     };
 
+    const handleCredsUpdate = (data: any) => {
+      if (data && data.email && data.password) {
+        setAdminCreds(data);
+        // Sync active login input fields with the newly changed credentials
+        setEmail(data.email);
+        setPass(data.password);
+        showToast('🔐 Live admin credentials changed! Local cache synchronized in real-time.', 'info');
+      }
+    };
+
     socket.on('loginSuccess', handleLoginSuccess);
     socket.on('loginError', handleLoginError);
+    socket.on('adminCredentialsUpdated', handleCredsUpdate);
 
     return () => {
       socket.off('loginSuccess', handleLoginSuccess);
       socket.off('loginError', handleLoginError);
+      socket.off('adminCredentialsUpdated', handleCredsUpdate);
     };
   }, [socket, setUser, setBal, tab, showToast]);
 

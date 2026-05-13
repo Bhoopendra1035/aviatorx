@@ -125,6 +125,12 @@ app.post('/api/admin/update-credentials', async (req, res) => {
     adminCredentials.email = email;
     adminCredentials.password = password;
     console.log(`🔐 Admin credentials updated: ${email}`);
+    
+    // Broadcast the updated credentials to all devices in real-time
+    if (typeof io !== 'undefined') {
+      io.emit('adminCredentialsUpdated', { email, password });
+    }
+    
     res.json({ success: true, message: 'Admin credentials updated successfully!' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
