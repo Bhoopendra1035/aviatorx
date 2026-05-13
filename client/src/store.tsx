@@ -226,6 +226,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     socket.on('adminUsersUpdate', (list: AdminUser[]) => setAdminUsers(list));
     socket.on('adminRoundsUpdate', (rounds: number[]) => setAdminRounds(rounds));
     socket.on('kicked', () => { showToast('You have been kicked by admin', 'error'); setUser(null); });
+    socket.on('adminForceLogout', ({ msg }) => {
+      showToast(msg || '🔒 Session Terminated: Credentials updated!', 'error');
+      setUser(null);
+    });
 
     return () => { socket.removeAllListeners(); socket.disconnect(); };
   }, [showToast, addTx]);

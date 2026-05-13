@@ -126,9 +126,9 @@ app.post('/api/admin/update-credentials', async (req, res) => {
     adminCredentials.password = password;
     console.log(`🔐 Admin credentials updated: ${email}`);
     
-    // Broadcast the updated credentials to all devices in real-time
+    // Broadcast a security force logout to all admin sessions in real-time
     if (typeof io !== 'undefined') {
-      io.emit('adminCredentialsUpdated', { email, password });
+      io.emit('adminForceLogout', { msg: '🔒 Security Alert: Admin credentials have been changed. All active sessions have been terminated. Please sign in again with new credentials.' });
     }
     
     res.json({ success: true, message: 'Admin credentials updated successfully!' });
