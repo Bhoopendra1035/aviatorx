@@ -744,7 +744,7 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
                   />
                 </div>
 
-                <div className="admin-settings-form-group" style={{ marginBottom: '1.5rem' }}>
+                <div className="admin-settings-form-group confirm-group">
                   <label className="admin-settings-form-label">
                     Confirm New Password
                   </label>
@@ -762,10 +762,6 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
                   type="submit"
                   disabled={isUpdatingCreds}
                   className="admin-btn-action edit admin-settings-form-submit"
-                  style={{
-                    cursor: isUpdatingCreds ? 'not-allowed' : 'pointer',
-                    opacity: isUpdatingCreds ? 0.7 : 1
-                  }}
                 >
                   {isUpdatingCreds ? '⏳ Updating Credentials...' : '💾 Save & Apply Credentials'}
                 </button>
