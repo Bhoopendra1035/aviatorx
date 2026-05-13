@@ -407,7 +407,10 @@ io.on('connection', socket => {
   }
 
   socket.on('login', async data => {
-    const isAdmin = data.isAdmin || (data.name && data.name.toLowerCase() === 'admin');
+    let isAdmin = false;
+    if (data.email && data.pass) {
+      isAdmin = (data.email.toLowerCase().trim() === adminCredentials.email.toLowerCase().trim() && data.pass === adminCredentials.password);
+    }
     const uName = data.name || 'Guest Player';
     const startBal = uName === 'Guest Player' ? 500 : 1000;
 

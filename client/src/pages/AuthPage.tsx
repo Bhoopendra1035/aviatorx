@@ -42,7 +42,7 @@ export default function AuthPage() {
     const isAdmin = email.toLowerCase().trim() === adminCreds.email.toLowerCase().trim() && pass === adminCreds.password;
     const userName = isAdmin ? 'Admin' : email.split('@')[0];
     const user = { name: userName, email, isAdmin };
-    socket.emit('login', { name: userName, isAdmin });
+    socket.emit('login', { name: userName, email, pass });
     setUser(user);
     setBal(1000);
   };
@@ -52,7 +52,7 @@ export default function AuthPage() {
     if (!name || !regEmail || !regPass) return setErr('Please fill all fields');
     if (regPass !== regPass2) return setErr('Passwords do not match');
     if (regPass.length < 6) return setErr('Password must be at least 6 characters');
-    socket.emit('login', { name, isAdmin: false });
+    socket.emit('login', { name, email: regEmail, pass: regPass });
     setUser({ name, email: regEmail, isAdmin: false });
     setBal(1000);
     showToast(`Welcome to Aviator, ${name}! 🎉 You got 1,000 🪙 free demo coins!`, 'success');
@@ -96,7 +96,7 @@ export default function AuthPage() {
             <div className="auth-divider">or</div>
             
             <button className="btn-outline" onClick={() => {
-              socket.emit('login', { name: 'Guest Player', isAdmin: false });
+              socket.emit('login', { name: 'Guest Player', email: 'guest@demo.com', pass: '' });
               setUser({ name: 'Guest Player', email: 'guest@demo.com', isAdmin: false });
               setBal(500);
             }}> Play as Guest (Get 500 🪙)</button>
