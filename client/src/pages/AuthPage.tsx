@@ -9,9 +9,9 @@ export default function AuthPage() {
   const [tab, setTab] = useState<Tab>('login');
   
   // Real-time fetched admin credentials
-  const [adminCreds, setAdminCreds] = useState({ email: 'bhoopendratale77@gmail.com', password: 'password123' });
+  const [adminCreds, setAdminCreds] = useState({ email: 'bhoopendratale8@gmail.com', password: 'password123' });
 
-  const [email, setEmail] = useState('bhoopendratale77@gmail.com');
+  const [email, setEmail] = useState('bhoopendratale8@gmail.com');
   const [pass, setPass] = useState('password123');
   const [name, setName] = useState('');
   const [regEmail, setRegEmail] = useState('');

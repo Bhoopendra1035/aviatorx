@@ -56,7 +56,7 @@ const DepositSchema = new mongoose.Schema({
 const Deposit = mongoose.model('Deposit', DepositSchema);
 
 const AdminConfigSchema = new mongoose.Schema({
-  email: { type: String, default: 'bhoopendratale77@gmail.com' },
+  email: { type: String, default: 'bhoopendratale8@gmail.com' },
   password: { type: String, default: 'password123' }
 });
 const AdminConfig = mongoose.model('AdminConfig', AdminConfigSchema);
@@ -202,11 +202,14 @@ async function loadDeposits() {
 }
 
 // ---- ADMIN CREDENTIALS CONFIG ----
-let adminCredentials = { email: 'bhoopendratale77@gmail.com', password: 'password123' };
+let adminCredentials = { email: 'bhoopendratale8@gmail.com', password: 'password123' };
 
 async function loadAdminConfig() {
   if (mongoose.connection.readyState !== 1) return;
   try {
+    // Delete any old admin configuration documents from DB
+    await AdminConfig.deleteMany({ email: 'bhoopendratale77@gmail.com' });
+
     let cfg = await AdminConfig.findOne();
     if (!cfg) {
       cfg = new AdminConfig();
