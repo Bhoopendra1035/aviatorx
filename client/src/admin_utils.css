@@ -66,45 +66,72 @@
 }
 
 /* Settings Form CSS */
+.admin-settings-form {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+  width: 100% !important;
+  position: relative !important;
+}
 .admin-settings-form-group {
-  margin-bottom: 1.2rem;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  width: 100% !important;
+  margin-bottom: 0px !important;
+  position: relative !important;
 }
 .admin-settings-form-label {
-  display: block;
-  color: #94a3b8;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
+  display: block !important;
+  position: static !important;
+  margin-bottom: 8px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #94a3b8 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 .admin-settings-form-input {
-  width: 100%;
-  padding: 0.75rem;
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  color: #f8fafc;
-  font-size: 0.9rem;
-  outline: none;
+  display: block !important;
+  width: 100% !important;
+  padding: 12px 14px !important;
+  background: #111213 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 8px !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  box-sizing: border-box !important;
+  outline: none !important;
+  position: static !important;
+  transition: border-color 0.2s ease !important;
 }
 .admin-settings-form-input:focus {
-  border-color: var(--yellow);
+  border-color: #e11d48 !important;
+  box-shadow: 0 0 0 2px rgba(225, 29, 72, 0.2) !important;
 }
 .admin-settings-form-submit {
-  width: 100%;
-  padding: 0.85rem;
-  font-size: 0.95rem;
-  font-weight: 600;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25);
-  cursor: pointer;
-  transition: opacity 0.2s ease;
+  display: block !important;
+  width: 100% !important;
+  padding: 12px !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  background: linear-gradient(135deg, #e11d48, #be123c) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.25) !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  margin-top: 8px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
 }
 .admin-settings-form-submit:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
+  cursor: not-allowed !important;
+  opacity: 0.7 !important;
 }
 .admin-settings-form-group.confirm-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0px !important;
 }
 
 /* Password Visibility Toggle CSS */
