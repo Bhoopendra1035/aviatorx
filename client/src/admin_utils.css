@@ -1,0 +1,66 @@
+/* ---- ADMIN UTILITIES ---- */
+.admin-lbl {
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.admin-val {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--blue);
+}
+.admin-status {
+  font-size: 18px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.admin-status.flying { color: var(--green); }
+.admin-status.crashed { color: var(--red); }
+.admin-status.waiting { color: var(--yellow); }
+
+.btn-auto-pad {
+  width: auto;
+  padding: 0 20px;
+}
+.btn-force-crash {
+  width: 100%;
+  background: var(--red);
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 800;
+  margin-top: 10px;
+}
+.table-scroll {
+  overflow-x: auto;
+}
+.table-empty-td {
+  text-align: center;
+  color: var(--muted);
+  padding: 20px;
+}
+.text-bold {
+  font-weight: 600;
+}
+.text-yellow-bold {
+  color: var(--yellow);
+  font-weight: 700;
+}
+.role-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.role-badge.admin {
+  background: rgba(226,183,20,0.15);
+  color: var(--yellow);
+}
+.role-badge.player {
+  background: rgba(59,130,246,0.15);
+  color: var(--blue);
+}
+.margin-top-16 {
+  margin-top: 16px;
+}
