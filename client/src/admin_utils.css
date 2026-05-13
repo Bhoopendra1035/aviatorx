@@ -131,3 +131,229 @@
   color: var(--yellow);
 }
 
+/* =======================================================
+   🛡️ PREMIUM RESPONSIVE ADMIN CONTROL CENTRE OVERRIDES
+   ======================================================= */
+
+/* Premium Scrollbars and Sizing for the Admin Modal */
+.admin-modal-box {
+  width: 720px !important;
+  max-width: 95% !important;
+  max-height: 85vh !important;
+  background: #181a1b !important;
+  border: 1px solid rgba(225, 29, 72, 0.3) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8) !important;
+  padding: 24px !important;
+  border-radius: 16px !important;
+  overflow-y: auto !important;
+}
+
+/* Responsive row for Tab Navigation with swipe/horizontal scrolling */
+.admin-tabs-row {
+  display: flex !important;
+  gap: 8px !important;
+  margin: 16px 0 !important;
+  padding-bottom: 8px !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Tab scrollbar enhancement */
+.admin-tabs-row::-webkit-scrollbar {
+  height: 4px;
+}
+.admin-tabs-row::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.admin-tabs-row::-webkit-scrollbar-thumb {
+  background: #e11d48;
+  border-radius: 2px;
+}
+
+/* Premium styled Admin Tab button */
+.admin-tab-btn {
+  background: #1e2022 !important;
+  color: #9ea0a3 !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  padding: 10px 16px !important;
+  border-radius: 8px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-shrink: 0;
+}
+
+.admin-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #fff !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+.admin-tab-btn.active {
+  background: linear-gradient(135deg, #e11d48, #be123c) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.3) !important;
+}
+
+/* Real-time Status Grid (Automatic columns layout) */
+.admin-status-grid {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important;
+  gap: 12px !important;
+  background: #111213 !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  margin-bottom: 16px !important;
+  justify-content: space-between !important;
+}
+
+/* Action forms flex wrap */
+.flex-gap8 {
+  display: flex !important;
+  gap: 8px !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+@media (max-width: 580px) {
+  .flex-gap8 {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .btn-next {
+    width: 100% !important;
+    margin-top: 4px;
+  }
+}
+
+/* Interactive tables and scroll lists */
+.admin-table-container {
+  background: #111213 !important;
+  padding: 16px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.04) !important;
+  margin-bottom: 16px !important;
+}
+
+.admin-table-scroll {
+  max-height: 260px !important;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+}
+
+/* Custom scrollbars for tables */
+.admin-table-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.admin-table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+/* Modern styled headers & rows inside table */
+.admin-table th {
+  background: #1e2022 !important;
+  color: #9ea0a3 !important;
+  font-weight: 700 !important;
+  text-align: left !important;
+  padding: 12px 14px !important;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+  text-transform: uppercase !important;
+  font-size: 10px !important;
+  letter-spacing: 0.5px !important;
+}
+
+.admin-table td {
+  padding: 12px 14px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+  color: #e2e8f0 !important;
+  font-size: 12px !important;
+  vertical-align: middle !important;
+}
+
+.admin-table tr:hover td {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Search input and control center search boxes */
+.admin-search-wrapper {
+  display: flex !important;
+  gap: 8px !important;
+  margin-bottom: 16px !important;
+  flex-wrap: wrap !important;
+}
+
+.admin-search-input {
+  flex: 1 !important;
+  min-width: 200px !important;
+  background: #111213 !important;
+}
+
+.btn-refresh {
+  background: #1e2022 !important;
+  color: #e2e8f0 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  padding: 8px 16px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+}
+
+.btn-refresh:hover {
+  background: rgba(255,255,255,0.04) !important;
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.15) !important;
+}
+
+/* Responsive customer stats grid */
+.admin-customer-date {
+  font-size: 10px !important;
+  color: #646669 !important;
+  margin-top: 2px !important;
+}
+
+.admin-customer-name {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #f8fafc !important;
+}
+
+/* Status Role badges */
+.admin-role-badge {
+  display: inline-block !important;
+  padding: 2px 8px !important;
+  border-radius: 12px !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+}
+
+.admin-role-badge.admin {
+  background: rgba(225, 29, 72, 0.15) !important;
+  color: #f43f5e !important;
+}
+
+.admin-role-badge.user {
+  background: rgba(148, 163, 184, 0.1) !important;
+  color: #94a3b8 !important;
+}
+
+/* Form block style inside tabs */
+.admin-tab-content {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 16px !important;
+}
+
+
