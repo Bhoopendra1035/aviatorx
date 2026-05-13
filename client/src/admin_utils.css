@@ -107,3 +107,27 @@
   margin-bottom: 1.5rem;
 }
 
+/* Password Visibility Toggle CSS */
+.password-input-wrapper {
+  position: relative;
+}
+.password-input-with-toggle {
+  padding-right: 3.5rem !important;
+}
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+}
+.password-toggle-btn:hover {
+  color: var(--yellow);
+}
+

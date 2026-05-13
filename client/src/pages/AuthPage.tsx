@@ -19,6 +19,16 @@ export default function AuthPage() {
   const [regPass2, setRegPass2] = useState('');
   const [err, setErr] = useState('');
 
+  // Password toggles
+  const [showPass, setShowPass] = useState(false);
+  const [showRegPass, setShowRegPass] = useState(false);
+
+  // Email format verification helper
+  const validateEmail = (emailStr: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(emailStr);
+  };
+
   // Load active admin credentials from DB on mount
   useEffect(() => {
     fetch(`${BACKEND_URL}/api/auth/admin-credentials`)
@@ -34,28 +44,55 @@ export default function AuthPage() {
       .catch(err => console.error('Failed to load admin credentials:', err));
   }, []);
 
+  // Listen for socket auth callbacks
+  useEffect(() => {
+    const handleLoginSuccess = (data: any) => {
+      setUser({ name: data.name, email: data.email, isAdmin: data.isAdmin });
+      setBal(data.bal);
+      if (tab === 'register') {
+        showToast(`Welcome to Aviator, ${data.name}! 🎉 Registration successful!`, 'success');
+      } else {
+        showToast(`Welcome back, ${data.name}! 👋`, 'success');
+      }
+    };
+
+    const handleLoginError = (data: any) => {
+      setErr(data.msg || 'Authentication failed');
+      showToast(`❌ Error: ${data.msg || 'Authentication failed'}`, 'error');
+    };
+
+    socket.on('loginSuccess', handleLoginSuccess);
+    socket.on('loginError', handleLoginError);
+
+    return () => {
+      socket.off('loginSuccess', handleLoginSuccess);
+      socket.off('loginError', handleLoginError);
+    };
+  }, [socket, setUser, setBal, tab, showToast]);
+
   const doLogin = () => {
     setErr('');
     if (!email || !pass) return setErr('Please fill all fields');
+    if (!validateEmail(email)) {
+      setErr('⚠️ ईमेल का फॉर्मेट गलत है! कृपया सही ईमेल डालें (उदा: you@example.com)');
+      return;
+    }
     
-    // Check against live admin credentials
-    const isAdmin = email.toLowerCase().trim() === adminCreds.email.toLowerCase().trim() && pass === adminCreds.password;
-    const userName = isAdmin ? 'Admin' : email.split('@')[0];
-    const user = { name: userName, email, isAdmin };
-    socket.emit('login', { name: userName, email, pass });
-    setUser(user);
-    setBal(1000);
+    socket.emit('login', { action: 'login', email, pass });
   };
 
   const doRegister = () => {
     setErr('');
     if (!name || !regEmail || !regPass) return setErr('Please fill all fields');
+    if (!validateEmail(regEmail)) {
+      setErr('⚠️ ईमेल का फॉर्मेट गलत है! कृपया सही ईमेल डालें (उदा: you@example.com)');
+      return;
+    }
     if (regPass !== regPass2) return setErr('Passwords do not match');
     if (regPass.length < 6) return setErr('Password must be at least 6 characters');
-    socket.emit('login', { name, email: regEmail, pass: regPass });
-    setUser({ name, email: regEmail, isAdmin: false });
-    setBal(1000);
-    showToast(`Welcome to Aviator, ${name}! 🎉 You got 1,000 🪙 free demo coins!`, 'success');
+    
+    const uName = name.trim();
+    socket.emit('login', { action: 'register', name: uName, email: regEmail, pass: regPass });
   };
 
   return (
@@ -78,7 +115,7 @@ export default function AuthPage() {
           <div className={`auth-tab ${tab === 'register' ? 'active' : ''}`} onClick={() => { setTab('register'); setErr(''); }}>Register</div>
         </div>
 
-        {err && <div className="auth-error">⚠️ {err}</div>}
+        {err && <div className="auth-error">{err}</div>}
 
         {tab === 'login' ? (
           <>
@@ -88,8 +125,13 @@ export default function AuthPage() {
             </div>
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input className="form-input" type="password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && doLogin()} />
+              <div className="password-input-wrapper">
+                <input className="form-input password-input-with-toggle" type={showPass ? "text" : "password"} placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && doLogin()} />
+                <button type="button" className="password-toggle-btn" onClick={() => setShowPass(!showPass)}>
+                  {showPass ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
             <button className="btn-yellow" onClick={doLogin}>Sign In →</button>
             
@@ -117,7 +159,12 @@ export default function AuthPage() {
             </div>
             <div className="form-group">
               <label className="form-label">Password</label>
-              <input className="form-input" type="password" placeholder="Min 6 characters" value={regPass} onChange={e => setRegPass(e.target.value)} />
+              <div className="password-input-wrapper">
+                <input className="form-input password-input-with-toggle" type={showRegPass ? "text" : "password"} placeholder="Min 6 characters" value={regPass} onChange={e => setRegPass(e.target.value)} />
+                <button type="button" className="password-toggle-btn" onClick={() => setShowRegPass(!showRegPass)}>
+                  {showRegPass ? "Hide" : "Show"}
+                </button>
+              </div>
             </div>
             <div className="form-group">
               <label className="form-label">Confirm Password</label>

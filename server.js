@@ -31,6 +31,8 @@ mongoose.connect(MONGO_URI)
 // ---- MONGOOSE SCHEMA & MODELS ----
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
+  email: { type: String, sparse: true },
+  password: { type: String },
   bal: { type: Number, default: 1000 },
   isAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
@@ -407,27 +409,66 @@ io.on('connection', socket => {
   }
 
   socket.on('login', async data => {
+    const action = data.action || 'login'; // 'login' or 'register'
+    const email = (data.email || '').toLowerCase().trim();
+    const pass = data.pass || '';
+    
     let isAdmin = false;
-    if (data.email && data.pass) {
-      isAdmin = (data.email.toLowerCase().trim() === adminCredentials.email.toLowerCase().trim() && data.pass === adminCredentials.password);
+    if (email && pass) {
+      isAdmin = (email === adminCredentials.email.toLowerCase().trim() && pass === adminCredentials.password);
     }
-    const uName = data.name || 'Guest Player';
-    const startBal = uName === 'Guest Player' ? 500 : 1000;
 
+    let uName = data.name || (email ? email.split('@')[0] : 'Guest Player');
+    if (isAdmin) uName = 'Admin';
+
+    const startBal = uName === 'Guest Player' ? 500 : 1000;
     let dbId = null;
     let liveBal = startBal;
 
     if (mongoose.connection.readyState === 1) {
       try {
-        let dbUser = await User.findOne({ name: uName });
-        if (!dbUser) {
-          dbUser = new User({ name: uName, bal: startBal, isAdmin });
-          await dbUser.save();
+        if (isAdmin) {
+          // Admin is dynamically authorized, load or create admin user
+          let adminUser = await User.findOne({ name: 'Admin' });
+          if (!adminUser) {
+            adminUser = new User({ name: 'Admin', bal: 1000, isAdmin: true, email: adminCredentials.email });
+            await adminUser.save();
+          }
+          dbId = adminUser._id;
+          liveBal = adminUser.bal;
+        } else if (uName === 'Guest Player') {
+          dbId = null;
+          liveBal = 500;
+        } else {
+          // Regular player sign-in or register flow
+          if (action === 'register') {
+            // Check if user already exists with this email or name
+            let existing = await User.findOne({ $or: [{ name: uName }, { email: email }] });
+            if (existing) {
+              return socket.emit('loginError', { msg: 'Username or Email already registered' });
+            }
+            // Create user
+            const newUser = new User({ name: uName, email: email, password: pass, bal: 1000, isAdmin: false });
+            await newUser.save();
+            dbId = newUser._id;
+            liveBal = newUser.bal;
+          } else {
+            // Sign in flow: find user by email & password
+            let existing = await User.findOne({ email: email });
+            if (!existing) {
+              return socket.emit('loginError', { msg: 'User does not exist. Please register first!' });
+            }
+            if (existing.password !== pass) {
+              return socket.emit('loginError', { msg: 'Incorrect Password!' });
+            }
+            dbId = existing._id;
+            liveBal = existing.bal;
+            uName = existing.name;
+          }
         }
-        dbId = dbUser._id;
-        liveBal = dbUser.bal;
       } catch (err) {
-        console.error('Mongo load/save user error:', err.message);
+        console.error('Mongo login/register error:', err.message);
+        return socket.emit('loginError', { msg: 'Database connection error' });
       }
     }
 
@@ -435,9 +476,11 @@ io.on('connection', socket => {
       dbId,
       name: uName,
       isAdmin,
-      bal: liveBal
+      bal: liveBal,
+      email: email
     };
 
+    socket.emit('loginSuccess', { name: uName, email: email, isAdmin, bal: liveBal });
     socket.emit('balUpdate', users[socket.id].bal);
     broadcastUsers();
   });
