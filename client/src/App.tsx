@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useApp, ToastContainer } from './store';
+import { useApp, ToastContainer, BACKEND_URL } from './store';
 import GamePage from './pages/GamePage';
 import AuthPage from './pages/AuthPage';
 
@@ -260,7 +260,7 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
   const fetchFullData = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('http://127.0.0.1:4000/api/admin/full-data');
+      const res = await fetch(`${BACKEND_URL}/api/admin/full-data`);
       if (res.ok) {
         const data = await res.json();
         setAllDbUsers(data.allUsers || []);

@@ -16,8 +16,15 @@ export interface TxItem { label: string; amount: number; plus: boolean; time: st
 export interface AdminUser { id: string; name: string; bal: number; isAdmin: boolean; }
 export interface User { name: string; email: string; isAdmin: boolean; }
 
+// ─── Backend URL Configuration ───────────────────────────────────────────────
+export const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || 
+  (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://127.0.0.1:4000'
+    : window.location.origin);
+
 // ─── Socket Singleton ────────────────────────────────────────────────────────
-const socket: Socket = io('http://127.0.0.1:4000', { autoConnect: false });
+const socket: Socket = io(BACKEND_URL, { autoConnect: false });
+
 
 // ─── Context ─────────────────────────────────────────────────────────────────
 interface AppCtx {
