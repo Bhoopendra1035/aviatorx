@@ -11,8 +11,8 @@ export default function AuthPage() {
   // Real-time fetched admin credentials
   const [adminCreds, setAdminCreds] = useState({ email: 'bhoopendratale8@gmail.com', password: 'password123' });
 
-  const [email, setEmail] = useState('bhoopendratale8@gmail.com');
-  const [pass, setPass] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [pass, setPass] = useState('');
   const [name, setName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPass, setRegPass] = useState('');
@@ -22,6 +22,12 @@ export default function AuthPage() {
   // Password toggles
   const [showPass, setShowPass] = useState(false);
   const [showRegPass, setShowRegPass] = useState(false);
+
+  // Refs for auto-saving login password securely
+  const passRef = React.useRef('');
+  const regPassRef = React.useRef('');
+  useEffect(() => { passRef.current = pass; }, [pass]);
+  useEffect(() => { regPassRef.current = regPass; }, [regPass]);
 
   // Email format verification helper
   const validateEmail = (emailStr: string) => {
@@ -36,9 +42,6 @@ export default function AuthPage() {
       .then(data => {
         if (data && data.email && data.password) {
           setAdminCreds(data);
-          // Auto-fill login fields with updated email for convenience
-          setEmail(data.email);
-          setPass(data.password);
         }
       })
       .catch(err => console.error('Failed to load admin credentials:', err));
@@ -47,7 +50,8 @@ export default function AuthPage() {
   // Listen for socket auth callbacks
   useEffect(() => {
     const handleLoginSuccess = (data: any) => {
-      setUser({ name: data.name, email: data.email, isAdmin: data.isAdmin });
+      const actualPass = tab === 'login' ? passRef.current : regPassRef.current;
+      setUser({ name: data.name, email: data.email, isAdmin: data.isAdmin, pass: actualPass });
       setBal(data.bal);
       if (tab === 'register') {
         showToast(`Welcome to Aviator, ${data.name}! 🎉 Registration successful!`, 'success');
@@ -146,10 +150,6 @@ export default function AuthPage() {
               </div>
             </div>
             <button className="btn-yellow" onClick={doLogin}>Sign In →</button>
-            
-            <div className="auth-demo-tip">
-              Demo admin: <strong className="yellow-text">{adminCreds.email}</strong> / <strong className="yellow-text">{adminCreds.password}</strong>
-            </div>
           </>
         ) : (
           <>

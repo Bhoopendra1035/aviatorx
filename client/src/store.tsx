@@ -14,7 +14,7 @@ export interface HistoryItem { m: number; round: number; }
 export interface PlayerBet { id: string; name: string; amount: number; cashedOut?: boolean; mult?: number; }
 export interface TxItem { label: string; amount: number; plus: boolean; time: string; }
 export interface AdminUser { id: string; name: string; bal: number; isAdmin: boolean; }
-export interface User { name: string; email: string; isAdmin: boolean; }
+export interface User { name: string; email: string; isAdmin: boolean; pass?: string; }
 
 // ─── Backend URL Configuration ───────────────────────────────────────────────
 export const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || 
@@ -82,7 +82,31 @@ export function ToastContainer() {
 
 // ─── App Provider ────────────────────────────────────────────────────────────
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUserState] = useState<User | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('aviator_user');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
+  });
+
+  const setUser = useCallback((u: User | null) => {
+    setUserState(u);
+    if (typeof window !== 'undefined') {
+      if (u) {
+        localStorage.setItem('aviator_user', JSON.stringify(u));
+      } else {
+        localStorage.removeItem('aviator_user');
+      }
+    }
+  }, []);
+
   const [bal, setBal] = useState(0);
   const [gameState, setGameState] = useState<GameState>({ status: 'waiting', mult: 1.0, waitSec: 5, crashPoint: 2, roundNum: 1 });
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -126,6 +150,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     socket.connect();
+
+    // Auto-login on mount / refresh if user credentials exist in localStorage
+    if (user && user.email && user.pass) {
+      socket.emit('login', { action: 'login', email: user.email, pass: user.pass });
+    }
 
     socket.on('state', (s: GameState) => {
       setGameState(s);
