@@ -135,14 +135,6 @@ export default function AuthPage() {
             </div>
             <button className="btn-yellow" onClick={doLogin}>Sign In →</button>
             
-            <div className="auth-divider">or</div>
-            
-            <button className="btn-outline" onClick={() => {
-              socket.emit('login', { name: 'Guest Player', email: 'guest@demo.com', pass: '' });
-              setUser({ name: 'Guest Player', email: 'guest@demo.com', isAdmin: false });
-              setBal(500);
-            }}> Play as Guest (Get 500 🪙)</button>
-            
             <div className="auth-demo-tip">
               Demo admin: <strong className="yellow-text">{adminCreds.email}</strong> / <strong className="yellow-text">{adminCreds.password}</strong>
             </div>
