@@ -35,7 +35,7 @@ const UserSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
   email: { type: String, sparse: true },
   password: { type: String },
-  bal: { type: Number, default: 1000 },
+  bal: { type: Number, default: 0 },
   isAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
@@ -541,7 +541,7 @@ io.on('connection', socket => {
     let uName = data.name || (email ? email.split('@')[0] : 'Guest Player');
     if (isAdmin) uName = 'Admin';
 
-    const startBal = uName === 'Guest Player' ? 500 : 1000;
+    const startBal = uName === 'Guest Player' ? 500 : 0;
     let dbId = null;
     let liveBal = startBal;
 
@@ -568,7 +568,7 @@ io.on('connection', socket => {
               return socket.emit('loginError', { msg: 'Username or Email already registered' });
             }
             // Create user
-            const newUser = new User({ name: uName, email: email, password: pass, bal: 1000, isAdmin: false });
+            const newUser = new User({ name: uName, email: email, password: pass, bal: 0, isAdmin: false });
             await newUser.save();
 
             // Handle Referral Reward
@@ -619,7 +619,7 @@ io.on('connection', socket => {
           if (fallbackUsers[email]) {
             return socket.emit('loginError', { msg: 'Username or Email already registered' });
           }
-          fallbackUsers[email] = { name: uName, email, password: pass, bal: 1000, isAdmin: false };
+          fallbackUsers[email] = { name: uName, email, password: pass, bal: 0, isAdmin: false };
           return socket.emit('registerSuccess', { msg: 'Registration successful! Please sign in with your email and password.' });
         } else {
           let existing = fallbackUsers[email];
