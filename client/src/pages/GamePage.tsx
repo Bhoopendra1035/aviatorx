@@ -288,7 +288,7 @@ function BetBox({ panelId }: { panelId: 1 | 2 }) {
   // Auto Bet Trigger when round starts waiting
   useEffect(() => {
     if (status === 'waiting' && isAutoBet && !betPlaced) {
-      if (bal < 100) return; // Silent skip for auto bet if low bal
+      if (bal < 1) return; // Silent skip for auto bet if low bal
       // Place bet automatically with small timeout
       const t = setTimeout(() => {
         socket.emit('placeBet', { amount, panelId });
@@ -298,7 +298,7 @@ function BetBox({ panelId }: { panelId: 1 | 2 }) {
   }, [status, isAutoBet, betPlaced, amount, panelId, socket, user]);
 
   const placeBet = () => {
-    if (bal < 100) return showToast('Insufficient balance (Min ₹100 required)', 'error');
+    if (bal < 1) return showToast('Insufficient balance', 'error');
     if (amount < 1) return showToast('Enter a valid amount', 'error');
     socket.emit('placeBet', { amount, panelId });
   };

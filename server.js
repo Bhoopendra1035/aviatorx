@@ -652,7 +652,7 @@ io.on('connection', socket => {
     const u = users[socket.id];
     if (!u) return;
     if (gameState.status !== 'waiting') return socket.emit('betError', { msg: 'Betting is closed', panelId });
-    if (u.bal < 100) return socket.emit('betError', { msg: 'Insufficient balance (Min ₹100 required)', panelId });
+    if (u.bal < 1) return socket.emit('betError', { msg: 'Insufficient balance', panelId });
     const betKey = `${socket.id}_${panelId}`;
     if (bets[betKey]) return socket.emit('betError', { msg: 'Bet already placed', panelId });
     if (amount < 1 || amount > u.bal) return socket.emit('betError', { msg: 'Invalid amount or balance', panelId });
