@@ -59,9 +59,87 @@ const Deposit = mongoose.model('Deposit', DepositSchema);
 
 const AdminConfigSchema = new mongoose.Schema({
   email: { type: String, default: 'bhoopendratale8@gmail.com' },
-  password: { type: String, default: 'password123' }
+  password: { type: String, default: 'Bhopal@123' }
 });
 const AdminConfig = mongoose.model('AdminConfig', AdminConfigSchema);
+
+const WithdrawSchema = new mongoose.Schema({
+  userName: { type: String, required: true },
+  amount: { type: Number, required: true },
+  method: { type: String, default: 'UPI' },
+  accountNo: { type: String },
+  ifscCode: { type: String },
+  upiId: { type: String },
+  status: { type: String, default: 'approved' },
+  createdAt: { type: Date, default: Date.now }
+});
+const Withdraw = mongoose.model('Withdraw', WithdrawSchema);
+
+const BetSchema = new mongoose.Schema({
+  userName: { type: String, required: true },
+  amount: { type: Number, required: true },
+  mult: { type: Number },
+  win: { type: Number, default: 0 },
+  cashedOut: { type: Boolean, default: false },
+  roundNum: { type: Number },
+  createdAt: { type: Date, default: Date.now }
+});
+const Bet = mongoose.model('Bet', BetSchema);
+
+// ---- USER PROFILE & HISTORY ENDPOINTS ----
+app.get('/api/user/history', async (req, res) => {
+  const { userName } = req.query;
+  if (!userName) return res.json({ deposits: [], withdraws: [] });
+  try {
+    let deposits = [];
+    let withdraws = [];
+    if (mongoose.connection.readyState === 1) {
+      deposits = await Deposit.find({ userName }).sort({ createdAt: -1 });
+      withdraws = await Withdraw.find({ userName }).sort({ createdAt: -1 });
+    }
+    res.json({ deposits, withdraws });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/user/bets', async (req, res) => {
+  const { userName } = req.query;
+  if (!userName) return res.json([]);
+  try {
+    let betsHistory = [];
+    if (mongoose.connection.readyState === 1) {
+      betsHistory = await Bet.find({ userName }).sort({ createdAt: -1 }).limit(100);
+    }
+    res.json(betsHistory);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/user/update-profile', async (req, res) => {
+  const { userName, email, password } = req.body;
+  if (!userName || !email || !password) {
+    return res.status(400).json({ success: false, error: 'All fields required' });
+  }
+  try {
+    if (mongoose.connection.readyState === 1) {
+      const dbUser = await User.findOne({ name: userName });
+      if (dbUser) {
+        dbUser.email = email;
+        dbUser.password = password;
+        await dbUser.save();
+      }
+    }
+    const targetSocketId = Object.keys(users).find(sid => users[sid].name === userName);
+    if (targetSocketId) {
+      users[targetSocketId].email = email;
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // ---- DEBUG API ENDPOINT (To view live server & DB state) ----
 app.get('/api/debug-state', async (req, res) => {
@@ -204,18 +282,20 @@ async function loadDeposits() {
 }
 
 // ---- ADMIN CREDENTIALS CONFIG ----
-let adminCredentials = { email: 'bhoopendratale8@gmail.com', password: 'password123' };
+let adminCredentials = { email: 'bhoopendratale8@gmail.com', password: 'Bhopal@123' };
 
 async function loadAdminConfig() {
   if (mongoose.connection.readyState !== 1) return;
   try {
-    // Delete any old admin configuration documents from DB
-    await AdminConfig.deleteMany({ email: 'bhoopendratale77@gmail.com' });
-
     let cfg = await AdminConfig.findOne();
     if (!cfg) {
-      cfg = new AdminConfig();
+      cfg = new AdminConfig({ email: 'bhoopendratale8@gmail.com', password: 'Bhopal@123' });
       await cfg.save();
+    } else {
+      if (cfg.password === 'password123') {
+        cfg.password = 'Bhopal@123';
+        await cfg.save();
+      }
     }
     adminCredentials = { email: cfg.email, password: cfg.password };
     console.log(`🔐 Loaded admin credentials from database! Email: ${adminCredentials.email}`);
@@ -310,14 +390,36 @@ function genCrash(seed) {
   return Math.max(1.01, +(1 / (1 - r * 0.97)).toFixed(2));
 }
 
+function broadcastRoundsToAdmins() {
+  const adminSockets = Object.keys(users).filter(id => users[id].isAdmin);
+  if (adminSockets.length === 0) return;
+
+  refillFuturePoints();
+  let upcoming = [];
+  if (gameState.status === 'waiting') {
+    upcoming.push(gameState.crashPoint);
+    upcoming.push(...futureCrashPoints.slice(0, 4));
+  } else {
+    if (nextCrashPoint !== null) {
+      upcoming.push(nextCrashPoint);
+      upcoming.push(...futureCrashPoints.slice(0, 4));
+    } else {
+      upcoming.push(...futureCrashPoints.slice(0, 5));
+    }
+  }
+
+  adminSockets.forEach(id => {
+    io.to(id).emit('adminRoundsUpdate', upcoming);
+  });
+}
+
 function broadcastUsers() {
   const adminSockets = Object.keys(users).filter(id => users[id].isAdmin);
   const list = Object.entries(users).map(([id, u]) => ({ id, name: u.name, bal: u.bal, isAdmin: u.isAdmin }));
   adminSockets.forEach(id => {
     io.to(id).emit('adminUsersUpdate', list);
-    refillFuturePoints();
-    io.to(id).emit('adminRoundsUpdate', futureCrashPoints.slice(0, 5));
   });
+  broadcastRoundsToAdmins();
 }
 
 function startWait() {
@@ -334,10 +436,7 @@ function startWait() {
     refillFuturePoints();
   }
 
-  const adminSockets = Object.keys(users).filter(id => users[id].isAdmin);
-  adminSockets.forEach(id => {
-    io.to(id).emit('adminRoundsUpdate', futureCrashPoints.slice(0, 5));
-  });
+  broadcastRoundsToAdmins();
 
   bets = {};
   io.emit('state', gameState);
@@ -378,7 +477,7 @@ function startFly() {
   }, 50);
 }
 
-function doCrash() {
+async function doCrash() {
   gameState.status = 'crashed';
   const crashMult = gameState.mult;
 
@@ -386,17 +485,25 @@ function doCrash() {
   if (roundHistory.length > 35) roundHistory.pop();
 
   saveRoundToDb(crashMult, gameState.roundNum); // Persistent Save in MongoDB
-
   io.emit('crashed', { mult: crashMult, history: roundHistory });
 
-  Object.keys(bets).forEach(betKey => {
+  await Promise.all(Object.keys(bets).map(async betKey => {
     const parts = betKey.split('_');
     const socketId = parts[0];
     const panelId = parts[1];
+    const betData = bets[betKey];
+
+    // Persist loss in DB
+    if (mongoose.connection.readyState === 1 && betData.dbId) {
+      try {
+        await Bet.findByIdAndUpdate(betData.dbId, { mult: crashMult, win: 0, cashedOut: false });
+      } catch(e){}
+    }
+
     if (users[socketId]) {
       io.to(socketId).emit('betLost', { mult: crashMult, panelId: parseInt(panelId) });
     }
-  });
+  }));
   bets = {};
 
   gameState.roundNum++;
@@ -418,6 +525,8 @@ io.on('connection', socket => {
       }
     });
   }
+
+  let fallbackUsers = {};
 
   socket.on('login', async data => {
     const action = data.action || 'login'; // 'login' or 'register'
@@ -461,6 +570,23 @@ io.on('connection', socket => {
             // Create user
             const newUser = new User({ name: uName, email: email, password: pass, bal: 1000, isAdmin: false });
             await newUser.save();
+
+            // Handle Referral Reward
+            if (data.referrer) {
+              const refUser = await User.findOne({ name: data.referrer });
+              if (refUser && refUser.name !== uName) {
+                refUser.bal += 100;
+                await refUser.save();
+                console.log(`🎁 Referral reward: 100 coins given to ${refUser.name} for referring ${uName}`);
+                // Notify referrer if online
+                const refSocketId = Object.keys(users).find(sid => users[sid].name === refUser.name);
+                if (refSocketId) {
+                  users[refSocketId].bal = refUser.bal;
+                  io.to(refSocketId).emit('balUpdate', refUser.bal);
+                  io.to(refSocketId).emit('toast', { msg: `🎁 You received 100 🪙 referral bonus for inviting ${uName}!`, type: 'success' });
+                }
+              }
+            }
             
             // Emit registration success event and return early to prevent automatic login
             return socket.emit('registerSuccess', { msg: 'Registration successful! Please sign in with your email and password.' });
@@ -482,6 +608,31 @@ io.on('connection', socket => {
         console.error('Mongo login/register error:', err.message);
         return socket.emit('loginError', { msg: 'Database connection error' });
       }
+    } else {
+      // Fallback in-memory database flow
+      if (isAdmin) {
+        liveBal = 1000;
+      } else if (uName === 'Guest Player') {
+        liveBal = 500;
+      } else {
+        if (action === 'register') {
+          if (fallbackUsers[email]) {
+            return socket.emit('loginError', { msg: 'Username or Email already registered' });
+          }
+          fallbackUsers[email] = { name: uName, email, password: pass, bal: 1000, isAdmin: false };
+          return socket.emit('registerSuccess', { msg: 'Registration successful! Please sign in with your email and password.' });
+        } else {
+          let existing = fallbackUsers[email];
+          if (!existing) {
+            return socket.emit('loginError', { msg: 'User does not exist. Please register first!' });
+          }
+          if (existing.password !== pass) {
+            return socket.emit('loginError', { msg: 'Incorrect Password!' });
+          }
+          liveBal = existing.bal;
+          uName = existing.name;
+        }
+      }
     }
 
     users[socket.id] = {
@@ -501,11 +652,25 @@ io.on('connection', socket => {
     const u = users[socket.id];
     if (!u) return;
     if (gameState.status !== 'waiting') return socket.emit('betError', { msg: 'Betting is closed', panelId });
+    if (u.bal < 100) return socket.emit('betError', { msg: 'Insufficient balance (Min ₹100 required)', panelId });
     const betKey = `${socket.id}_${panelId}`;
     if (bets[betKey]) return socket.emit('betError', { msg: 'Bet already placed', panelId });
     if (amount < 1 || amount > u.bal) return socket.emit('betError', { msg: 'Invalid amount or balance', panelId });
 
-    bets[betKey] = amount;
+    bets[betKey] = { amount, dbId: null };
+    
+    // Persist bet in DB
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const newBet = new Bet({ userName: u.name, amount, roundNum: gameState.roundNum });
+        const saved = await newBet.save();
+        bets[betKey].dbId = saved._id;
+        console.log(`📝 Bet saved to DB for ${u.name}: $${amount}`);
+      } catch(e){
+        console.error('❌ Error saving bet to DB:', e.message);
+      }
+    }
+
     const newBal = u.bal - amount;
     await updateDbUserBalance(socket.id, newBal); // Persistent balance update
 
@@ -520,8 +685,20 @@ io.on('connection', socket => {
     const betKey = `${socket.id}_${panelId}`;
     if (!u || !bets[betKey] || gameState.status !== 'flying') return;
 
-    const betAmt = bets[betKey];
+    const betData = bets[betKey];
+    const betAmt = betData.amount;
     const win = Math.floor(betAmt * gameState.mult);
+    
+    // Persist cashout in DB
+    if (mongoose.connection.readyState === 1 && betData.dbId) {
+      try {
+        await Bet.findByIdAndUpdate(betData.dbId, { mult: gameState.mult, win, cashedOut: true });
+        console.log(`💰 Cashout updated in DB for ${u.name}: ${gameState.mult}x`);
+      } catch(e){
+        console.error('❌ Error updating cashout in DB:', e.message);
+      }
+    }
+
     delete bets[betKey];
 
     const newBal = u.bal + win;
@@ -545,6 +722,41 @@ io.on('connection', socket => {
     broadcastUsers();
   });
 
+  socket.on('withdraw', async data => {
+    const u = users[socket.id];
+    if (!u) return;
+    const amt = typeof data === 'object' ? data.amount : data;
+    if (amt < 500 || amt > u.bal) return;
+
+    const newBal = u.bal - amt;
+    await updateDbUserBalance(socket.id, newBal); // Persistent balance update
+
+    socket.emit('balUpdate', u.bal);
+    socket.emit('txAdded', { 
+      label: `Withdrawal (${typeof data === 'object' ? data.method : 'UPI'})`, 
+      amount: amt, 
+      plus: false 
+    });
+
+    if (mongoose.connection.readyState === 1) {
+      try {
+        const w = new Withdraw({
+          userName: u.name,
+          amount: amt,
+          method: typeof data === 'object' ? data.method : 'UPI',
+          accountNo: typeof data === 'object' ? data.accountNo : '',
+          ifscCode: typeof data === 'object' ? data.ifscCode : '',
+          upiId: typeof data === 'object' ? data.upiId : '',
+          status: 'approved'
+        });
+        await w.save();
+      } catch (err) {
+        console.error('Error saving withdraw:', err.message);
+      }
+    }
+    broadcastUsers();
+  });
+
   socket.on('forceCrash', () => {
     const u = users[socket.id];
     if (u && u.isAdmin && gameState.status === 'flying') {
@@ -555,9 +767,15 @@ io.on('connection', socket => {
   socket.on('setNextCrash', mult => {
     const u = users[socket.id];
     if (u && u.isAdmin && mult >= 1.0) {
-      nextCrashPoint = parseFloat(mult);
-      socket.emit('toast', { msg: `🎯 Next crash target set to ${nextCrashPoint.toFixed(2)}x`, type: 'success' });
-      broadcastUsers();
+      const targetMult = parseFloat(mult);
+      nextCrashPoint = targetMult;
+      // If currently waiting, apply it to the active waiting round too
+      if (gameState.status === 'waiting') {
+        gameState.crashPoint = targetMult;
+      }
+      console.log(`🎯 Admin set next crash point to: ${targetMult}x`);
+      socket.emit('toast', { msg: `🎯 Next crash target set to ${targetMult.toFixed(2)}x`, type: 'success' });
+      broadcastRoundsToAdmins();
     }
   });
 
@@ -652,7 +870,11 @@ io.on('connection', socket => {
 
   // ── DEPOSIT REQUEST: user submits amount + UTR ───────────────────────────
   socket.on('depositRequest', async ({ amount, utrNumber, userName }) => {
-    if (!amount || amount < 10 || !utrNumber) return;
+    console.log(`📥 Received depositRequest: ₹${amount}, UTR: ${utrNumber}, User: ${userName}`);
+    if (!amount || amount < 10 || !utrNumber) {
+      console.log('⚠️ Invalid deposit request params');
+      return;
+    }
 
     const cleanUtr = utrNumber.trim();
 
@@ -706,6 +928,7 @@ io.on('connection', socket => {
     // Notify all admins
     broadcastDepositsToAdmins();
     const adminSockets = Object.keys(users).filter(id => users[id].isAdmin);
+    console.log(`📣 Notifying ${adminSockets.length} admins about new deposit`);
     adminSockets.forEach(id => {
       io.to(id).emit('toast', { msg: `💰 New deposit request: ₹${amt} from ${dep.userName} (UTR: ${cleanUtr})`, type: 'info' });
     });
@@ -737,8 +960,8 @@ io.on('connection', socket => {
       }
     }
 
-    // Credit coins to target user
-    const targetSocketId = dep.socketId;
+    // Credit coins to target user by finding current active socket id
+    const targetSocketId = Object.keys(users).find(sid => users[sid].name === dep.userName) || dep.socketId;
     const targetUser = users[targetSocketId];
 
     if (targetUser) {
@@ -746,7 +969,7 @@ io.on('connection', socket => {
       await updateDbUserBalance(targetSocketId, newBal);
       io.to(targetSocketId).emit('balUpdate', targetUser.bal);
       io.to(targetSocketId).emit('toast', {
-        msg: `✅ Your deposit of ₹${dep.amount} has been approved! ${dep.amount} 🪙 added to your wallet.`,
+        msg: `🎉 TOP-UP SUCCESS: ₹${dep.amount} Deposit Approved! ${dep.amount} 🪙 added to your wallet.`,
         type: 'success'
       });
     } else {
@@ -788,10 +1011,10 @@ io.on('connection', socket => {
       }
     }
 
-    const targetSocketId = dep.socketId;
+    const targetSocketId = Object.keys(users).find(sid => users[sid].name === dep.userName) || dep.socketId;
     if (targetSocketId) {
       io.to(targetSocketId).emit('toast', {
-        msg: `❌ Your deposit request of ₹${dep.amount} was rejected. Contact support if this is an error.`,
+        msg: `⚠️ TOP-UP FAILED: ₹${dep.amount} Deposit Rejected. Please verify UTR details or contact support.`,
         type: 'error'
       });
     }

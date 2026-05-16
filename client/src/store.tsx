@@ -82,9 +82,9 @@ export function ToastContainer() {
 
 // ─── App Provider ────────────────────────────────────────────────────────────
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUserState] = useState<User | null>(() => {
+  const [user, setUserState] = useState<User | null>((() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('aviator_user');
+      const saved = sessionStorage.getItem('aviator_user');
       if (saved) {
         try {
           return JSON.parse(saved);
@@ -94,15 +94,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }
     return null;
-  });
+  }));
 
   const setUser = useCallback((u: User | null) => {
     setUserState(u);
     if (typeof window !== 'undefined') {
       if (u) {
-        localStorage.setItem('aviator_user', JSON.stringify(u));
+        sessionStorage.setItem('aviator_user', JSON.stringify(u));
       } else {
-        localStorage.removeItem('aviator_user');
+        sessionStorage.removeItem('aviator_user');
       }
     }
   }, []);

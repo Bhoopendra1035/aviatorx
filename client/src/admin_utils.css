@@ -382,4 +382,42 @@
   gap: 16px !important;
 }
 
+/* ---- ADMIN PORTAL CLASSES (AuthPage) ---- */
+.admin-portal-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-bottom: 16px;
+  line-height: 1.5;
+  background: rgba(225, 29, 72, 0.08);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(225, 29, 72, 0.2);
+}
+
+.admin-portal-desc strong {
+  color: #f43f5e;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.btn-quick-admin {
+  margin-bottom: 16px;
+  background: #1e293b !important;
+  color: #38bdf8 !important;
+  border: 1px solid #0284c7 !important;
+}
+
+.btn-quick-admin:hover {
+  background: #0f172a !important;
+  color: #7dd3fc !important;
+}
+
+.btn-admin-submit {
+  background: linear-gradient(135deg, #e11d48, #be123c) !important;
+}
+
+.btn-admin-submit:hover {
+  opacity: 0.9 !important;
+}
+
 

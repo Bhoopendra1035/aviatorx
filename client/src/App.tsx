@@ -4,8 +4,8 @@ import GamePage from './pages/GamePage';
 import AuthPage from './pages/AuthPage';
 
 // ─── DEPOSIT FUNDS MODAL ─────────────────────────────────────────────────────
-const UPI_ID = 'bhoopendratale8@okaxis';
-const UPI_NAME = 'Bhoopendra';
+const UPI_ID = 'bh62631912@jio';
+const UPI_NAME = 'Aviatorx';
 
 function DepositModal({ onClose }: { onClose: () => void }) {
   const { socket, user, showToast } = useApp();
@@ -20,14 +20,15 @@ function DepositModal({ onClose }: { onClose: () => void }) {
     : '';
 
   const handleAmountSelect = (v: number) => {
+    if (v < 100) return showToast('Minimum deposit amount is ₹100', 'error');
     setSelectedAmt(v);
     setStep('qr');
   };
 
   const handleSubmitUTR = () => {
     const utr = utrNumber.trim();
-    if (!utr || utr.length < 6) return showToast('Please enter a valid UTR / Transaction number', 'error');
-    if (!selectedAmt || selectedAmt < 10) return showToast('Invalid amount', 'error');
+    if (!utr || utr.length !== 12) return showToast('UTR number must be exactly 12 digits', 'error');
+    if (!selectedAmt || selectedAmt < 100) return showToast('Invalid amount (min ₹100)', 'error');
 
     setIsSubmitting(true);
     socket.emit('depositRequest', {
@@ -37,7 +38,7 @@ function DepositModal({ onClose }: { onClose: () => void }) {
     });
     setStep('done');
     setIsSubmitting(false);
-    showToast('✅ Deposit request submitted! Awaiting admin approval.', 'success');
+    showToast('✅ Deposit request submitted! Approval in 3-5 mins.', 'success');
   };
 
   return (
@@ -49,17 +50,12 @@ function DepositModal({ onClose }: { onClose: () => void }) {
         {/* ── STEP 1: Choose Amount ── */}
         {step === 'amount' && (
           <>
-            <div className="modal-sub">Choose amount to deposit via UPI</div>
+            <div className="modal-sub">First, choose an amount to deposit (Min ₹100)</div>
             <div className="pay-methods">
               <div className="pay-method active">
                 <div className="pay-icon">📱</div>
-                <div className="pay-name">UPI</div>
-                <div className="pay-sub">GPay / PhonePe / Paytm</div>
-              </div>
-              <div className="pay-method pay-method-disabled">
-                <div className="pay-icon">💳</div>
-                <div className="pay-name">Card</div>
-                <div className="pay-sub">Unavailable</div>
+                <div className="pay-name">UPI Payment</div>
+                <div className="pay-sub">Fast & Secure</div>
               </div>
             </div>
             <div className="amount-grid">
@@ -68,9 +64,9 @@ function DepositModal({ onClose }: { onClose: () => void }) {
               ))}
             </div>
             <div className="form-group form-group-mt12">
-              <label className="form-label">Or Custom Amount (₹)</label>
+              <label className="form-label">Or Enter Custom Amount (₹)</label>
               <div className="flex-gap8">
-                <input className="form-input" type="number" title="Custom amount" min={10}
+                <input className="form-input" type="number" title="Custom amount" min={100}
                   value={customAmt} onChange={e => setCustomAmt(Number(e.target.value))} />
                 <button className="btn-yellow btn-next" onClick={() => handleAmountSelect(customAmt)}>Next →</button>
               </div>
@@ -81,9 +77,8 @@ function DepositModal({ onClose }: { onClose: () => void }) {
         {/* ── STEP 2: QR + UTR Entry ── */}
         {step === 'qr' && (
           <>
-            <div className="modal-sub">Scan & pay, then enter your UTR number</div>
+            <div className="modal-sub">Scan QR & pay, then submit your 12-digit UTR</div>
 
-            {/* UPI details card */}
             <div className="dep-upi-card">
               <div className="dep-qr-wrap">
                 <img src={qrUrl} alt="Scan to Pay" width={150} height={150} className="dep-qr-img" />
@@ -94,7 +89,7 @@ function DepositModal({ onClose }: { onClose: () => void }) {
                   <span className="dep-upi-val">{UPI_ID}</span>
                 </div>
                 <div className="dep-upi-row">
-                  <span className="dep-upi-lbl">Payee</span>
+                  <span className="dep-upi-lbl">Name</span>
                   <span className="dep-upi-val">{UPI_NAME}</span>
                 </div>
                 <div className="dep-upi-row">
@@ -105,45 +100,44 @@ function DepositModal({ onClose }: { onClose: () => void }) {
             </div>
 
             <div className="dep-steps-tip">
-              <div className="dep-step-row"><span className="dep-step-num">1</span> Open GPay / PhonePe / Paytm</div>
-              <div className="dep-step-row"><span className="dep-step-num">2</span> Scan the QR code or send to UPI ID above</div>
-              <div className="dep-step-row"><span className="dep-step-num">3</span> After payment, enter the UTR / Transaction ID below</div>
+              <div className="dep-step-row dep-step-note">
+                ⚠️ NOTE: QR ya UPI payment karne ke baad hi UTR number dalein.
+              </div>
+              <div className="dep-step-row"><span className="dep-step-num">1</span> Scan the QR above and pay ₹{selectedAmt}</div>
+              <div className="dep-step-row"><span className="dep-step-num">2</span> Enter the 12-digit UTR number from your payment app</div>
             </div>
 
             <div className="form-group form-group-mt12">
-              <label className="form-label">🔢 UTR / Transaction Reference Number</label>
+              <label className="form-label">🔢 12-Digit UTR Number</label>
               <input
                 className="form-input dep-utr-input"
                 type="text"
-                placeholder="Enter 12-digit UTR number from your payment app"
+                placeholder="Enter exactly 12 digits"
                 value={utrNumber}
-                onChange={e => setUtrNumber(e.target.value)}
-                maxLength={30}
+                onChange={e => setUtrNumber(e.target.value.replace(/\D/g, ''))}
+                maxLength={12}
               />
-              <div className="dep-utr-hint">
-                Find UTR in your payment app → Transaction History → Reference / UTR No.
-              </div>
             </div>
 
             <button className="btn-yellow" onClick={handleSubmitUTR} disabled={isSubmitting}>
-              {isSubmitting ? '⏳ Submitting...' : '📤 Submit Deposit Request'}
+              {isSubmitting ? '⏳ Submitting...' : '📤 Submit UTR Number'}
             </button>
-            <button className="btn-outline btn-mt8" onClick={() => setStep('amount')}>← Change Amount</button>
+            <button className="btn-outline btn-mt8" onClick={() => setStep('amount')}>← Back to Amount</button>
           </>
         )}
 
-        {/* ── STEP 3: Success / Pending ── */}
+        {/* ── STEP 3: Success ── */}
         {step === 'done' && (
           <div className="dep-success-wrap">
-            <div className="dep-success-icon">⏳</div>
-            <div className="dep-success-title">Request Submitted!</div>
+            <div className="dep-success-icon">✅</div>
+            <div className="dep-success-title">Payment Submitted!</div>
             <div className="dep-success-msg">
-              Your deposit request of <strong>₹{selectedAmt.toLocaleString()}</strong> with UTR <strong>{utrNumber}</strong> has been sent to the admin.
+              Aapka amount <strong>3-5 minute</strong> mein wallet mein aa jayega.
             </div>
             <div className="dep-success-sub">
-              Admin will verify your payment and credit <strong>{selectedAmt} 🪙</strong> to your wallet shortly.
+              Admin is verifying your UTR: <strong>{utrNumber}</strong>
             </div>
-            <button className="btn-yellow" onClick={onClose}>Got it! 👍</button>
+            <button className="btn-yellow" onClick={onClose}>Close</button>
           </div>
         )}
       </div>
@@ -153,19 +147,46 @@ function DepositModal({ onClose }: { onClose: () => void }) {
 
 // ─── WITHDRAW MODAL ──────────────────────────────────────────────────────────
 function WithdrawModal({ onClose }: { onClose: () => void }) {
-  const { bal, socket, addTx, showToast } = useApp();
+  const { bal, socket, addTx, showToast, user } = useApp();
   const [withdrawAmt, setWithdrawAmt] = useState('');
+  const [method, setMethod] = useState<'UPI' | 'BANK'>('UPI');
   const [upiAddress, setUpiAddress] = useState('');
+  const [accNo, setAccNo] = useState('');
+  const [ifsc, setIfsc] = useState('');
+
+  useEffect(() => {
+    if (user?.email) {
+      const saved = localStorage.getItem(`bank_${user.email}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.accNo) setAccNo(parsed.accNo);
+          if (parsed.ifsc) setIfsc(parsed.ifsc);
+        } catch(e){}
+      }
+    }
+  }, [user]);
 
   const handleWithdraw = () => {
     const amt = parseInt(withdrawAmt);
-    if (!amt || amt < 100) return showToast('Minimum withdrawal is 100 🪙', 'error');
-    if (!upiAddress.includes('@')) return showToast('Please enter a valid UPI address', 'error');
+    if (!amt || amt < 500) return showToast('Minimum withdrawal is 500 🪙', 'error');
     if (amt > bal) return showToast('Insufficient balance!', 'error');
 
-    socket.emit('withdraw', amt);
-    addTx({ label: `Withdrawal to ${upiAddress}`, amount: amt, plus: false, time: new Date().toLocaleTimeString() });
-    showToast(`₹${amt} withdrawal request submitted to ${upiAddress}! 🏦`, 'success');
+    if (method === 'UPI') {
+      if (!upiAddress.includes('@')) return showToast('Please enter a valid UPI address', 'error');
+      socket.emit('withdraw', { amount: amt, method: 'UPI', upiId: upiAddress });
+      addTx({ label: `Withdrawal to ${upiAddress}`, amount: amt, plus: false, time: new Date().toLocaleTimeString() });
+      showToast(`₹${amt} withdrawal request submitted to UPI (${upiAddress})! 🏦`, 'success');
+    } else {
+      if (!accNo || accNo.length < 6) return showToast('Please enter a valid Account Number', 'error');
+      if (!ifsc || ifsc.length < 4) return showToast('Please enter a valid IFSC Code', 'error');
+      socket.emit('withdraw', { amount: amt, method: 'Bank Transfer', accountNo: accNo, ifscCode: ifsc });
+      addTx({ label: `Withdrawal to Bank (${accNo})`, amount: amt, plus: false, time: new Date().toLocaleTimeString() });
+      showToast(`₹${amt} withdrawal request submitted to Bank Account! 🏦`, 'success');
+      if (user?.email) {
+        localStorage.setItem(`bank_${user.email}`, JSON.stringify({ accNo, ifsc }));
+      }
+    }
     onClose();
   };
 
@@ -174,7 +195,7 @@ function WithdrawModal({ onClose }: { onClose: () => void }) {
       <div className="modal-box animate-fade-in" onClick={e => e.stopPropagation()}>
         <div className="modal-close-x" onClick={onClose}>×</div>
         <div className="modal-title">🏦 Cash Out Winnings</div>
-        <div className="modal-sub">Withdraw demo balance to your UPI account</div>
+        <div className="modal-sub">Withdraw demo balance directly to your account</div>
 
         <div className="form-group">
           <label className="form-label">Available Balance</label>
@@ -185,19 +206,349 @@ function WithdrawModal({ onClose }: { onClose: () => void }) {
 
         <div className="form-group">
           <label className="form-label">Withdrawal Amount (🪙)</label>
-          <input className="form-input" type="number" placeholder="Min 100" value={withdrawAmt} onChange={e => setWithdrawAmt(e.target.value)} />
+          <input className="form-input" type="number" placeholder="Min 500" title="Withdrawal Amount" value={withdrawAmt} onChange={e => setWithdrawAmt(e.target.value)} />
         </div>
 
         <div className="form-group">
-          <label className="form-label">Your UPI Address (ID)</label>
-          <input className="form-input" type="text" placeholder="example@paytm" value={upiAddress} onChange={e => setUpiAddress(e.target.value)} />
+          <label className="form-label">Payout Method</label>
+          <div className="payout-method-tabs">
+            <button type="button" className={`payout-btn ${method === 'UPI' ? 'active' : ''}`} onClick={() => setMethod('UPI')}>📱 UPI Transfer</button>
+            <button type="button" className={`payout-btn ${method === 'BANK' ? 'active' : ''}`} onClick={() => setMethod('BANK')}>🏦 Bank Transfer</button>
+          </div>
         </div>
 
+        {method === 'UPI' ? (
+          <div className="form-group form-group-mt12">
+            <label className="form-label">Your UPI Address (ID)</label>
+            <input className="form-input" type="text" placeholder="example@paytm" title="UPI ID" value={upiAddress} onChange={e => setUpiAddress(e.target.value)} />
+          </div>
+        ) : (
+          <div className="form-group-grid form-group-mt12">
+            <div className="form-group">
+              <label className="form-label">Bank Account Number</label>
+              <input className="form-input" type="text" placeholder="Enter account no." title="Bank Account Number" value={accNo} onChange={e => setAccNo(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">IFSC Code</label>
+              <input className="form-input text-uppercase" type="text" placeholder="e.g. SBIN0001234" title="IFSC Code" value={ifsc} onChange={e => setIfsc(e.target.value)} />
+            </div>
+          </div>
+        )}
+
         <div className="modal-tip">
-          Withdrawals are processed instantly on our automated system. Please ensure your UPI ID is correct.
+          Withdrawals are processed instantly on our automated system. Please ensure your details are correct.
         </div>
 
         <button className="btn-yellow" onClick={handleWithdraw}>Submit Withdrawal →</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── USER PROFILE & SETTINGS MODAL (PREMIUM) ─────────────────────────────────
+function UserProfileModal({ onClose }: { onClose: () => void }) {
+  const { user, setUser, bal, showToast } = useApp();
+  const [activeTab, setActiveTab] = useState<'settings' | 'bank' | 'deposits' | 'withdraws' | 'help' | 'refer'>('settings');
+
+  // Profile fields
+  const [email, setEmail] = useState(user?.email || '');
+  const [password, setPassword] = useState(user?.pass || '');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  // Bank fields
+  const [accNo, setAccNo] = useState('');
+  const [ifsc, setIfsc] = useState('');
+  const [isSavingBank, setIsSavingBank] = useState(false);
+
+  // History lists fetched from API
+  const [deposits, setDeposits] = useState<any[]>([]);
+  const [withdraws, setWithdraws] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    if (user?.email) {
+      const saved = localStorage.getItem(`bank_${user.email}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.accNo) setAccNo(parsed.accNo);
+          if (parsed.ifsc) setIfsc(parsed.ifsc);
+        } catch (e) {}
+      }
+    }
+  }, [user]);
+
+  const fetchHistory = async () => {
+    if (!user?.name) return;
+    setIsLoadingHistory(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/user/history?userName=${encodeURIComponent(user.name)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDeposits(data.deposits || []);
+        setWithdraws(data.withdraws || []);
+      }
+    } catch (err) {
+      console.error('Failed to load history:', err);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'deposits' || activeTab === 'withdraws') {
+      fetchHistory();
+    }
+  }, [activeTab]);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return showToast('Please fill all fields', 'error');
+    setIsUpdatingProfile(true);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/user/update-profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userName: user?.name, email, password })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast('✅ Profile updated successfully!', 'success');
+        if (user) {
+          setUser({ ...user, email, pass: password });
+        }
+      } else {
+        showToast(`❌ Update failed: ${data.error || 'Error'}`, 'error');
+      }
+    } catch (err) {
+      showToast('❌ Connection error.', 'error');
+    } finally {
+      setIsUpdatingProfile(false);
+    }
+  };
+
+  const handleSaveBank = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!accNo || !ifsc) return showToast('Please fill all fields', 'error');
+    setIsSavingBank(true);
+    if (user?.email) {
+      localStorage.setItem(`bank_${user.email}`, JSON.stringify({ accNo, ifsc }));
+      showToast('🏦 Bank details saved for fast withdrawal!', 'success');
+      setTimeout(() => setIsSavingBank(false), 2000);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="profile-modal-box animate-fade-in" onClick={e => e.stopPropagation()}>
+        
+        {/* Header Section */}
+        <div className="profile-header-premium">
+          <div className="profile-avatar-big">
+            {user?.name.substring(0, 2).toUpperCase()}
+          </div>
+          <div className="profile-info-main">
+            <div className="profile-name-text">{user?.name}</div>
+            <div className="profile-bal-text">
+              <span>💰</span> {bal.toLocaleString()} USD
+            </div>
+          </div>
+          <div className="modal-close-x" onClick={onClose}>×</div>
+        </div>
+
+        <div className="profile-main-layout">
+          {/* Tab Navigation Sidebar */}
+          <div className="profile-tabs-sidebar">
+          <div className={`profile-tab-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+            ⚙️ Settings
+          </div>
+          <div className={`profile-tab-item ${activeTab === 'bank' ? 'active' : ''}`} onClick={() => setActiveTab('bank')}>
+            🏦 Withdraw Details
+          </div>
+          <div className={`profile-tab-item ${activeTab === 'deposits' ? 'active' : ''}`} onClick={() => setActiveTab('deposits')}>
+            📥 Deposit History
+          </div>
+          <div className={`profile-tab-item ${activeTab === 'withdraws' ? 'active' : ''}`} onClick={() => setActiveTab('withdraws')}>
+            📤 Withdraw History
+          </div>
+          <div className={`profile-tab-item ${activeTab === 'refer' ? 'active' : ''}`} onClick={() => setActiveTab('refer')}>
+            🎁 Refer & Earn
+          </div>
+          <div className={`profile-tab-item ${activeTab === 'help' ? 'active' : ''}`} onClick={() => setActiveTab('help')}>
+            ❓ Help
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="profile-content-area">
+          
+          {/* Tab 1: Settings */}
+          {activeTab === 'settings' && (
+            <div className="animate-fade-in">
+              <div className="profile-section-title">🔐 Account Security</div>
+              <form onSubmit={handleUpdateProfile}>
+                <div className="form-premium-group">
+                  <label className="form-premium-label">Email Address</label>
+                  <input type="email" className="form-premium-input" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" title="Email address" required />
+                </div>
+                <div className="form-premium-group">
+                  <label className="form-premium-label">Account Password</label>
+                  <input type="text" className="form-premium-input" value={password} onChange={e => setPassword(e.target.value)} placeholder="Password" title="Account Password" required />
+                </div>
+                <button type="submit" className="btn-save-premium" disabled={isUpdatingProfile}>
+                  {isUpdatingProfile ? 'Saving...' : 'Save Changes'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Tab 2: Bank Details */}
+          {activeTab === 'bank' && (
+            <div className="animate-fade-in">
+              <div className="profile-section-title">🏦 Withdrawal Bank Details</div>
+              <form onSubmit={handleSaveBank}>
+                <div className="form-premium-group">
+                  <label className="form-premium-label">Bank Account Number</label>
+                  <input type="text" className="form-premium-input" value={accNo} onChange={e => setAccNo(e.target.value)} placeholder="Enter 12-16 digit account no." title="Bank Account Number" required />
+                </div>
+                <div className="form-premium-group">
+                  <label className="form-premium-label">IFSC Code</label>
+                  <input type="text" className="form-premium-input text-uppercase" value={ifsc} onChange={e => setIfsc(e.target.value)} placeholder="e.g. SBIN0001234" title="IFSC Code" required />
+                </div>
+                <button type="submit" className="btn-save-premium">
+                  {isSavingBank ? '✅ Saved!' : 'Save Details'}
+                </button>
+              </form>
+            </div>
+          )}
+
+          {/* Tab 3: Deposit History */}
+          {activeTab === 'deposits' && (
+            <div className="animate-fade-in">
+              <div className="profile-section-title">📥 Deposit Records</div>
+              {isLoadingHistory ? (
+                <div className="text-muted">Loading history...</div>
+              ) : deposits.length === 0 ? (
+                <div className="text-muted">No deposit history found.</div>
+              ) : (
+                <div className="history-table-wrapper">
+                  <table className="history-table">
+                    <thead>
+                      <tr>
+                        <th className="history-th">Date</th>
+                        <th className="history-th">Amount</th>
+                        <th className="history-th">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {deposits.map((d, i) => (
+                        <tr key={i} className="history-tr">
+                          <td className="history-td">{new Date(d.createdAt).toLocaleDateString()}</td>
+                          <td className="history-td font-bold">₹{d.amount}</td>
+                          <td className="history-td">
+                            <span className={`status-pill ${d.status}`}>{d.status}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab 4: Withdraw History */}
+          {activeTab === 'withdraws' && (
+            <div className="animate-fade-in">
+              <div className="profile-section-title">📤 Withdrawal Records</div>
+              {isLoadingHistory ? (
+                <div className="text-muted">Loading history...</div>
+              ) : withdraws.length === 0 ? (
+                <div className="text-muted">No withdrawal history found.</div>
+              ) : (
+                <div className="history-table-wrapper">
+                  <table className="history-table">
+                    <thead>
+                      <tr>
+                        <th className="history-th">Date</th>
+                        <th className="history-th">Amount</th>
+                        <th className="history-th">Method</th>
+                        <th className="history-th">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {withdraws.map((w, i) => (
+                        <tr key={i} className="history-tr">
+                          <td className="history-td">{new Date(w.createdAt).toLocaleDateString()}</td>
+                          <td className="history-td font-bold">₹{w.amount}</td>
+                          <td className="history-td text-muted">{w.method}</td>
+                          <td className="history-td">
+                            <span className="status-pill approved">Completed</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Tab 6: Refer & Earn */}
+          {activeTab === 'refer' && (
+            <div className="animate-fade-in">
+              <div className="profile-section-title">🎁 Refer & Earn 100 🪙</div>
+              <div className="refer-card-premium">
+                <p className="refer-desc">Invite your friends to AviatorX! When they register using your link, you both win. You get <strong>100 🪙</strong> instantly!</p>
+                <div className="refer-link-container">
+                  <input 
+                    className="refer-link-input" 
+                    readOnly 
+                    value={`${window.location.origin}?ref=${user?.name}`} 
+                    title="Your Referral Link"
+                    placeholder="Referral Link"
+                  />
+                  <button className="btn-copy-link" onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}?ref=${user?.name}`);
+                    showToast('✅ Referral link copied!', 'success');
+                  }}>Copy Link</button>
+                </div>
+                <div className="refer-stats">
+                  Your Referral ID: <strong>{user?.name}</strong>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 5: Help Section */}
+          {activeTab === 'help' && (
+            <div className="animate-fade-in">
+              <div className="profile-section-title">❓ Help & Support</div>
+              <div className="help-card">
+                <div className="help-card-title">How to Withdraw?</div>
+                <div className="help-card-desc">Enter your bank details in the 'Withdraw Details' tab first. Then click on your balance in the header to request a withdrawal.</div>
+              </div>
+              <div className="help-card">
+                <div className="help-card-title">Support Email</div>
+                <div className="help-card-desc">For any issues regarding deposits or account access, please email us at <strong>support@aviatorspribe.com</strong></div>
+              </div>
+              <div className="help-card">
+                <div className="help-card-title">Fair Play</div>
+                <div className="help-card-desc">All flight outcomes are generated using a provably fair system. Multipliers are determined before the round starts.</div>
+              </div>
+            </div>
+          )}
+
+          </div>
+        </div>
+
+        {/* Footer with Logout */}
+        <div className="profile-footer-premium">
+          <button className="btn-logout-premium" onClick={() => { setUser(null); onClose(); }}>
+            🚪 Log Out from Account
+          </button>
+        </div>
+
       </div>
     </div>
   );
@@ -367,6 +718,7 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
     ? Math.max(...allDbRounds.map(r => r.m))
     : 1.00;
   const totalCoinsPool = allDbUsers.reduce((acc, u) => acc + u.bal, 0);
+  const pendingCount = pendingDeposits.filter(d => d.status === 'pending').length;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -392,7 +744,7 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
             📈 Round Stats ({totalRounds})
           </button>
           <button className={`admin-tab-btn dep-tab-btn ${activeTab === 'deposits' ? 'active' : ''}`} onClick={() => setActiveTab('deposits')}>
-            💰 Deposits {pendingDeposits.length > 0 && <span className="dep-badge">{pendingDeposits.length}</span>}
+            💰 Deposits {pendingCount > 0 && <span className="dep-badge">{pendingCount}</span>}
           </button>
           <button className={`admin-tab-btn ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
             ⚙️ Settings
@@ -645,7 +997,7 @@ function AdminDashboardModal({ onClose }: { onClose: () => void }) {
         {activeTab === 'deposits' && (
           <div className="admin-tab-content animate-fade-in">
             <div className="dep-admin-header">
-              <div className="admin-section-title">💰 Deposit Requests ({pendingDeposits.length})</div>
+              <div className="admin-section-title">💰 Deposit Requests ({pendingCount} Pending / {pendingDeposits.length} Total)</div>
               <button className="btn-refresh" onClick={() => socket.emit('getAdminDeposits')} title="Refresh">🔄 Refresh</button>
             </div>
 
@@ -782,6 +1134,8 @@ export default function App() {
   const [showDeposit, setShowDeposit] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
 
   // Unauthenticated screen
   if (!user) {
@@ -830,8 +1184,15 @@ export default function App() {
             </span>
             <button className="nav-deposit-btn" onClick={(e) => { e.stopPropagation(); setShowDeposit(true); }}>Deposit</button>
           </div>
-          {/* Avatar / Log out trigger */}
-          <div className="nav-avatar" title="Click to Logout" onClick={() => setUser(null)}>
+          {/* Avatar / Profile modal trigger */}
+          <div 
+            className="nav-avatar" 
+            role="button"
+            tabIndex={0}
+            title="Click to open Profile & Settings" 
+            onClick={() => setShowProfileModal(true)}
+            onKeyDown={(e) => e.key === 'Enter' && setShowProfileModal(true)}
+          >
             {user.name.substring(0, 2).toUpperCase()}
           </div>
         </div>
@@ -854,6 +1215,7 @@ export default function App() {
       {showDeposit && <DepositModal onClose={() => setShowDeposit(false)} />}
       {showWithdraw && <WithdrawModal onClose={() => setShowWithdraw(false)} />}
       {showAdmin && <AdminDashboardModal onClose={() => setShowAdmin(false)} />}
+      {showProfileModal && <UserProfileModal onClose={() => setShowProfileModal(false)} />}
     </div>
   );
 }

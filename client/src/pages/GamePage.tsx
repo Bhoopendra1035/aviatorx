@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useApp } from '../store';
+import { useApp, BACKEND_URL } from '../store';
 import type { HistoryItem, PlayerBet } from '../store';
 
 // ─── COLOR THEMED MULTIPLIER HISTORY PILLS ──────────────────────────────────
@@ -257,11 +257,12 @@ function MultOverlay() {
 // ─── BETTING CONTROLS PANEL ──────────────────────────────────────────────────
 function BetBox({ panelId }: { panelId: 1 | 2 }) {
   const { 
-    socket, gameState, showToast, 
+    socket, gameState, showToast, user, bal,
     bet1Placed, bet2Placed, 
     bet1CashedOut, bet2CashedOut, 
     currentBet1, currentBet2 
   } = useApp();
+  const { status, mult } = gameState;
 
   const [amount, setAmount] = useState(100);
   const [autoCashout, setAutoCashout] = useState('');
@@ -269,12 +270,10 @@ function BetBox({ panelId }: { panelId: 1 | 2 }) {
   const [isAutoCashout, setIsAutoCashout] = useState(false);
   const [mode, setMode] = useState<'manual' | 'auto'>('manual');
   
-  const { status, mult } = gameState;
-
   // Retrieve panel-specific states
-  const betPlaced = panelId === 1 ? bet1Placed : bet2Placed;
-  const cashedOut = panelId === 1 ? bet1CashedOut : bet2CashedOut;
-  const currentBet = panelId === 1 ? currentBet1 : currentBet2;
+  const betPlaced = panelId === 1 ? useApp().bet1Placed : useApp().bet2Placed;
+  const cashedOut = panelId === 1 ? useApp().bet1CashedOut : useApp().bet2CashedOut;
+  const currentBet = panelId === 1 ? useApp().currentBet1 : useApp().currentBet2;
 
   // Client-Authoritative Auto Cashout trigger
   useEffect(() => {
@@ -289,15 +288,17 @@ function BetBox({ panelId }: { panelId: 1 | 2 }) {
   // Auto Bet Trigger when round starts waiting
   useEffect(() => {
     if (status === 'waiting' && isAutoBet && !betPlaced) {
+      if (bal < 100) return; // Silent skip for auto bet if low bal
       // Place bet automatically with small timeout
       const t = setTimeout(() => {
         socket.emit('placeBet', { amount, panelId });
       }, 500);
       return () => clearTimeout(t);
     }
-  }, [status, isAutoBet, betPlaced, amount, panelId, socket]);
+  }, [status, isAutoBet, betPlaced, amount, panelId, socket, user]);
 
   const placeBet = () => {
+    if (bal < 100) return showToast('Insufficient balance (Min ₹100 required)', 'error');
     if (amount < 1) return showToast('Enter a valid amount', 'error');
     socket.emit('placeBet', { amount, panelId });
   };
@@ -463,8 +464,9 @@ function BetBox({ panelId }: { panelId: 1 | 2 }) {
 
 // ─── SIDE STATS PANEL (ALL BETS, MY BETS, TOP) ──────────────────────────────
 function LiveBetsPanel() {
-  const { liveBets, user } = useApp();
+  const { liveBets, user, gameState } = useApp();
   const [activeTab, setActiveTab] = useState<'all' | 'my' | 'top'>('all');
+  const [betHistory, setBetHistory] = useState<any[]>([]);
 
   // Compute stats info
   const totalBetAmount = liveBets.reduce((acc, b) => acc + b.amount, 0);
@@ -475,11 +477,38 @@ function LiveBetsPanel() {
     return name.substring(0, 2) + '***' + name.substring(name.length - 1);
   };
 
+  // Fetch persistent bet history when 'My Bets' is active
+  useEffect(() => {
+    if (activeTab === 'my' && user?.name) {
+      console.log('Fetching bet history for:', user.name);
+      fetch(`${BACKEND_URL}/api/user/bets?userName=${encodeURIComponent(user.name)}`)
+        .then(res => res.json())
+        .then(data => {
+          console.log('Fetched history data:', data);
+          setBetHistory(data);
+        })
+        .catch(err => console.error('Failed to load bet history:', err));
+    }
+  }, [activeTab, user?.name, gameState.status]); // Refresh history when round crashes/restarts
+
   // Filter bets based on active tab
   const getFilteredBets = () => {
     if (activeTab === 'all') return liveBets;
-    if (activeTab === 'my') return liveBets.filter(b => b.name === user?.name);
-    // Top bets filter (e.g. sorted by multiplier)
+    if (activeTab === 'my') {
+      // Current active bets + Historical bets
+      const active = liveBets.filter(b => b.name === user?.name);
+      // Map historical bets to same format
+      const history = betHistory.map(h => ({
+        name: h.userName,
+        amount: h.amount,
+        mult: h.mult,
+        cashedOut: h.cashedOut,
+        isHistory: true,
+        time: h.createdAt
+      }));
+      return [...active, ...history];
+    }
+    // Top bets filter
     return [...liveBets].sort((a, b) => (b.mult || 0) - (a.mult || 0));
   };
 
@@ -505,27 +534,30 @@ function LiveBetsPanel() {
       </div>
 
       <div className="stats-table-header">
-        <span className="stats-header-user">User</span>
+        <span className="stats-header-user">User / Time</span>
         <span className="align-center">Bet (USD)</span>
         <span className="align-center">Mult</span>
-        <span className="align-right">Cash Out</span>
+        <span className="align-right">Win / Cashout</span>
       </div>
 
       <div className="panel-body">
         {getFilteredBets().length === 0 && (
           <div className="stats-empty-label">
-            No active bets for this round
+            No bets found
           </div>
         )}
-        {getFilteredBets().map((p, i) => {
+        {getFilteredBets().map((p: any, i) => {
           const initials = p.name.substring(0, 2).toUpperCase();
           const hasWon = p.cashedOut;
           
           return (
-            <div key={i} className={`player-row ${hasWon ? 'won' : ''}`}>
+            <div key={i} className={`player-row ${hasWon ? 'won' : ''} ${p.isHistory ? 'history-row' : ''}`}>
               <div className="player-info-cell">
                 <div className="player-avatar-mini">{initials}</div>
-                <span className="player-name-lbl">{maskName(p.name)}</span>
+                <div className="player-name-col">
+                  <span className="player-name-lbl">{maskName(p.name)}</span>
+                  {p.isHistory && <span className="player-time-lbl">{new Date(p.time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>}
+                </div>
               </div>
               
               <div className="player-bet-cell">
@@ -535,6 +567,8 @@ function LiveBetsPanel() {
               <div className="player-mult-cell">
                 {hasWon && p.mult ? (
                   <span className="player-mult-pill won">{p.mult.toFixed(2)}x</span>
+                ) : p.isHistory ? (
+                  <span className="player-mult-pill lost">{p.mult ? p.mult.toFixed(2) : '-'}x</span>
                 ) : (
                   <span className="player-mult-pill waiting">-</span>
                 )}
@@ -555,30 +589,50 @@ function LiveBetsPanel() {
   );
 }
 
-// ─── MAIN GAME PAGE ──────────────────────────────────────────────────────────
 export default function GamePage() {
   const { history } = useApp();
+  const [mobileView, setMobileView] = useState<'game' | 'bets'>('game');
 
   return (
     <div className="game-wrapper">
-      {/* Left Columns - Live bets statistics */}
-      <LiveBetsPanel />
+      {/* ── MOBILE BOTTOM NAVIGATION ── */}
+      <div className="mobile-view-nav">
+        <button 
+          className={`mob-nav-btn ${mobileView === 'game' ? 'active' : ''}`}
+          onClick={() => setMobileView('game')}
+        >
+          🎮 GAME
+        </button>
+        <button 
+          className={`mob-nav-btn ${mobileView === 'bets' ? 'active' : ''}`}
+          onClick={() => setMobileView('bets')}
+        >
+          📊 ALL BETS
+        </button>
+      </div>
 
-      {/* Main Center Area */}
-      <div className="center-panel">
-        {/* Dynamic history line */}
-        <HistoryBar history={history} />
+      {/* Left Columns - Live bets statistics (Hidden on mobile if not in 'bets' view) */}
+      <div className={`side-panel-wrapper ${mobileView === 'bets' ? 'mob-visible' : 'mob-hidden'}`}>
+        <LiveBetsPanel />
+      </div>
 
-        {/* Flight canvas simulation panel */}
-        <div className="canvas-container">
-          <GameCanvas />
-          <MultOverlay />
-        </div>
+      {/* Main Center Area (Hidden on mobile if not in 'game' view) */}
+      <div className={`center-panel-wrapper ${mobileView === 'game' ? 'mob-visible' : 'mob-hidden'}`}>
+        <div className="center-panel">
+          {/* Dynamic history line */}
+          <HistoryBar history={history} />
 
-        {/* Two Independent Betting Controllers side-by-side */}
-        <div className="bet-controls">
-          <BetBox panelId={1} />
-          <BetBox panelId={2} />
+          {/* Flight canvas simulation panel */}
+          <div className="canvas-container">
+            <GameCanvas />
+            <MultOverlay />
+          </div>
+
+          {/* Two Independent Betting Controllers side-by-side */}
+          <div className="bet-controls">
+            <BetBox panelId={1} />
+            <BetBox panelId={2} />
+          </div>
         </div>
       </div>
     </div>

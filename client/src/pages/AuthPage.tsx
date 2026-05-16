@@ -9,7 +9,7 @@ export default function AuthPage() {
   const [tab, setTab] = useState<Tab>('login');
   
   // Real-time fetched admin credentials
-  const [adminCreds, setAdminCreds] = useState({ email: 'bhoopendratale8@gmail.com', password: 'password123' });
+  const [adminCreds, setAdminCreds] = useState({ email: 'bhoopendratale8@gmail.com', password: 'Bhopal@123' });
 
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -18,6 +18,16 @@ export default function AuthPage() {
   const [regPass, setRegPass] = useState('');
   const [regPass2, setRegPass2] = useState('');
   const [err, setErr] = useState('');
+  const [referrer, setReferrer] = useState('');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      setReferrer(ref);
+      setTab('register'); 
+    }
+  }, []);
 
   // Password toggles
   const [showPass, setShowPass] = useState(false);
@@ -105,7 +115,7 @@ export default function AuthPage() {
     if (regPass.length < 6) return setErr('Password must be at least 6 characters');
     
     const uName = name.trim();
-    socket.emit('login', { action: 'register', name: uName, email: regEmail, pass: regPass });
+    socket.emit('login', { action: 'register', name: uName, email: regEmail, pass: regPass, referrer });
   };
 
   return (
@@ -130,16 +140,16 @@ export default function AuthPage() {
 
         {err && <div className="auth-error">{err}</div>}
 
-        {tab === 'login' ? (
+        {tab === 'login' && (
           <>
             <div className="form-group">
               <label className="form-label">Email Address</label>
-              <input className="form-input" type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
+              <input className="form-input" type="email" autoComplete="off" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Password</label>
               <div className="password-input-wrapper">
-                <input className="form-input password-input-with-toggle" type={showPass ? "text" : "password"} placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)}
+                <input className="form-input password-input-with-toggle" type={showPass ? "text" : "password"} autoComplete="new-password" placeholder="••••••••" value={pass} onChange={e => setPass(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && doLogin()} />
                 <button type="button" className="password-toggle-btn" onClick={() => setShowPass(!showPass)}>
                   {showPass ? "Hide" : "Show"}
@@ -148,20 +158,22 @@ export default function AuthPage() {
             </div>
             <button className="btn-yellow" onClick={doLogin}>Sign In →</button>
           </>
-        ) : (
+        )}
+
+        {tab === 'register' && (
           <>
             <div className="form-group">
               <label className="form-label">Full Name</label>
-              <input className="form-input" type="text" placeholder="Arjun Sharma" value={name} onChange={e => setName(e.target.value)} />
+              <input className="form-input" type="text" autoComplete="off" placeholder="Arjun Sharma" value={name} onChange={e => setName(e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Email Address</label>
-              <input className="form-input" type="email" placeholder="you@example.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
+              <input className="form-input" type="email" autoComplete="off" placeholder="you@example.com" value={regEmail} onChange={e => setRegEmail(e.target.value)} />
             </div>
             <div className="form-group">
               <label className="form-label">Password</label>
               <div className="password-input-wrapper">
-                <input className="form-input password-input-with-toggle" type={showRegPass ? "text" : "password"} placeholder="Min 6 characters" value={regPass} onChange={e => setRegPass(e.target.value)} />
+                <input className="form-input password-input-with-toggle" type={showRegPass ? "text" : "password"} autoComplete="new-password" placeholder="Min 6 characters" value={regPass} onChange={e => setRegPass(e.target.value)} />
                 <button type="button" className="password-toggle-btn" onClick={() => setShowRegPass(!showRegPass)}>
                   {showRegPass ? "Hide" : "Show"}
                 </button>
@@ -169,7 +181,7 @@ export default function AuthPage() {
             </div>
             <div className="form-group">
               <label className="form-label">Confirm Password</label>
-              <input className="form-input" type="password" placeholder="Repeat password" value={regPass2} onChange={e => setRegPass2(e.target.value)} />
+              <input className="form-input" type="password" autoComplete="new-password" placeholder="Repeat password" value={regPass2} onChange={e => setRegPass2(e.target.value)} />
             </div>
             <button className="btn-yellow" onClick={doRegister}>Create Account & Get 1000 🪙</button>
           </>
