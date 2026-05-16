@@ -359,25 +359,25 @@ function UserProfileModal({ onClose }: { onClose: () => void }) {
         <div className="profile-main-layout">
           {/* Tab Navigation Sidebar */}
           <div className="profile-tabs-sidebar">
-          <div className={`profile-tab-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
-            ⚙️ Settings
+            <div className={`profile-tab-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+              <span className="tab-icon">⚙️</span> <span className="tab-text">Settings</span>
+            </div>
+            <div className={`profile-tab-item ${activeTab === 'bank' ? 'active' : ''}`} onClick={() => setActiveTab('bank')}>
+              <span className="tab-icon">🏦</span> <span className="tab-text">Withdraw Details</span>
+            </div>
+            <div className={`profile-tab-item ${activeTab === 'deposits' ? 'active' : ''}`} onClick={() => setActiveTab('deposits')}>
+              <span className="tab-icon">📥</span> <span className="tab-text">Deposit History</span>
+            </div>
+            <div className={`profile-tab-item ${activeTab === 'withdraws' ? 'active' : ''}`} onClick={() => setActiveTab('withdraws')}>
+              <span className="tab-icon">📤</span> <span className="tab-text">Withdraw History</span>
+            </div>
+            <div className={`profile-tab-item ${activeTab === 'refer' ? 'active' : ''}`} onClick={() => setActiveTab('refer')}>
+              <span className="tab-icon">🎁</span> <span className="tab-text">Refer & Earn</span>
+            </div>
+            <div className={`profile-tab-item ${activeTab === 'help' ? 'active' : ''}`} onClick={() => setActiveTab('help')}>
+              <span className="tab-icon">❓</span> <span className="tab-text">Help</span>
+            </div>
           </div>
-          <div className={`profile-tab-item ${activeTab === 'bank' ? 'active' : ''}`} onClick={() => setActiveTab('bank')}>
-            🏦 Withdraw Details
-          </div>
-          <div className={`profile-tab-item ${activeTab === 'deposits' ? 'active' : ''}`} onClick={() => setActiveTab('deposits')}>
-            📥 Deposit History
-          </div>
-          <div className={`profile-tab-item ${activeTab === 'withdraws' ? 'active' : ''}`} onClick={() => setActiveTab('withdraws')}>
-            📤 Withdraw History
-          </div>
-          <div className={`profile-tab-item ${activeTab === 'refer' ? 'active' : ''}`} onClick={() => setActiveTab('refer')}>
-            🎁 Refer & Earn
-          </div>
-          <div className={`profile-tab-item ${activeTab === 'help' ? 'active' : ''}`} onClick={() => setActiveTab('help')}>
-            ❓ Help
-          </div>
-        </div>
 
         {/* Content Area */}
         <div className="profile-content-area">
