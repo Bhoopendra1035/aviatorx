@@ -350,7 +350,7 @@ function UserProfileModal({ onClose }: { onClose: () => void }) {
           <div className="profile-info-main">
             <div className="profile-name-text">{user?.name}</div>
             <div className="profile-bal-text">
-              <span>💰</span> {bal.toLocaleString()} USD
+              <span>💰</span> {bal.toLocaleString()} ₹
             </div>
           </div>
           <div className="modal-close-x" onClick={onClose}>×</div>
@@ -1180,7 +1180,7 @@ export default function App() {
           <div className="balance-wrapper" onClick={() => setShowWithdraw(true)} title="Click to Withdraw">
             <span className="balance-amount">
               {bal.toLocaleString()}
-              <span className="balance-currency">USD</span>
+              <span className="balance-currency">₹</span>
             </span>
             <button className="nav-deposit-btn" onClick={(e) => { e.stopPropagation(); setShowDeposit(true); }}>Deposit</button>
           </div>

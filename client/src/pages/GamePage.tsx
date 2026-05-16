@@ -401,19 +401,19 @@ function BetBox({ panelId }: { panelId: 1 | 2 }) {
           {btnState === 'bet' && (
             <>
               <span className="action-btn-main-text">BET</span>
-              <span className="action-btn-sub-text">{amount.toLocaleString()} USD</span>
+              <span className="action-btn-sub-text">{amount.toLocaleString()} ₹</span>
             </>
           )}
           {btnState === 'waiting' && (
             <>
               <span className="action-btn-main-text btn-text-cancel">CANCEL</span>
-              <span className="action-btn-sub-text">{amount.toLocaleString()} USD</span>
+              <span className="action-btn-sub-text">{amount.toLocaleString()} ₹</span>
             </>
           )}
           {btnState === 'cashout' && (
             <>
               <span className="action-btn-main-text">CASH OUT</span>
-              <span className="action-btn-sub-text">{(currentBet * mult).toFixed(2)} USD</span>
+              <span className="action-btn-sub-text">{(currentBet * mult).toFixed(2)} ₹</span>
             </>
           )}
           {btnState === 'cashed' && (
@@ -517,7 +517,7 @@ function LiveBetsPanel() {
       <div className="left-panel-header">
         <div className="round-summary-bar">
           <span className="bets-count-label">All Bets ({liveBets.length})</span>
-          <span className="bets-sum-val">Total: {totalBetAmount.toLocaleString()} USD</span>
+          <span className="bets-sum-val">Total: {totalBetAmount.toLocaleString()} ₹</span>
         </div>
 
         <div className="panel-tabs">
@@ -535,7 +535,7 @@ function LiveBetsPanel() {
 
       <div className="stats-table-header">
         <span className="stats-header-user">User / Time</span>
-        <span className="align-center">Bet (USD)</span>
+        <span className="align-center">Bet (₹)</span>
         <span className="align-center">Mult</span>
         <span className="align-right">Win / Cashout</span>
       </div>
