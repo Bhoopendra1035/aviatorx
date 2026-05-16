@@ -10,7 +10,7 @@ const UPI_NAME = 'Aviatorx';
 function DepositModal({ onClose }: { onClose: () => void }) {
   const { socket, user, showToast } = useApp();
   const [step, setStep] = useState<'amount' | 'qr' | 'done'>('amount');
-  const [customAmt, setCustomAmt] = useState(500);
+  const [customAmt, setCustomAmt] = useState(300);
   const [selectedAmt, setSelectedAmt] = useState<number>(0);
   const [utrNumber, setUtrNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -20,7 +20,7 @@ function DepositModal({ onClose }: { onClose: () => void }) {
     : '';
 
   const handleAmountSelect = (v: number) => {
-    if (v < 100) return showToast('Minimum deposit amount is ₹100', 'error');
+    if (v < 300) return showToast('Minimum deposit amount is ₹300', 'error');
     setSelectedAmt(v);
     setStep('qr');
   };
@@ -28,7 +28,7 @@ function DepositModal({ onClose }: { onClose: () => void }) {
   const handleSubmitUTR = () => {
     const utr = utrNumber.trim();
     if (!utr || utr.length !== 12) return showToast('UTR number must be exactly 12 digits', 'error');
-    if (!selectedAmt || selectedAmt < 100) return showToast('Invalid amount (min ₹100)', 'error');
+    if (!selectedAmt || selectedAmt < 300) return showToast('Invalid amount (min ₹300)', 'error');
 
     setIsSubmitting(true);
     socket.emit('depositRequest', {
@@ -50,7 +50,7 @@ function DepositModal({ onClose }: { onClose: () => void }) {
         {/* ── STEP 1: Choose Amount ── */}
         {step === 'amount' && (
           <>
-            <div className="modal-sub">First, choose an amount to deposit (Min ₹100)</div>
+            <div className="modal-sub">First, choose an amount to deposit (Min ₹300)</div>
             <div className="pay-methods">
               <div className="pay-method active">
                 <div className="pay-icon">📱</div>
@@ -59,14 +59,14 @@ function DepositModal({ onClose }: { onClose: () => void }) {
               </div>
             </div>
             <div className="amount-grid">
-              {[100, 200, 500, 1000, 2000, 5000].map(v => (
+              {[300, 500, 1000, 2000, 5000].map(v => (
                 <div key={v} className="amount-btn" onClick={() => handleAmountSelect(v)}>₹{v.toLocaleString()}</div>
               ))}
             </div>
             <div className="form-group form-group-mt12">
               <label className="form-label">Or Enter Custom Amount (₹)</label>
               <div className="flex-gap8">
-                <input className="form-input" type="number" title="Custom amount" min={100}
+                <input className="form-input" type="number" title="Custom amount" min={300}
                   value={customAmt} onChange={e => setCustomAmt(Number(e.target.value))} />
                 <button className="btn-yellow btn-next" onClick={() => handleAmountSelect(customAmt)}>Next →</button>
               </div>

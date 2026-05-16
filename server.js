@@ -712,7 +712,7 @@ io.on('connection', socket => {
 
   socket.on('deposit', async amount => {
     const u = users[socket.id];
-    if (!u || amount < 1) return;
+    if (!u || amount < 300) return;
 
     const newBal = u.bal + amount;
     await updateDbUserBalance(socket.id, newBal); // Persistent balance update
@@ -871,7 +871,7 @@ io.on('connection', socket => {
   // ── DEPOSIT REQUEST: user submits amount + UTR ───────────────────────────
   socket.on('depositRequest', async ({ amount, utrNumber, userName }) => {
     console.log(`📥 Received depositRequest: ₹${amount}, UTR: ${utrNumber}, User: ${userName}`);
-    if (!amount || amount < 10 || !utrNumber) {
+    if (!amount || amount < 300 || !utrNumber) {
       console.log('⚠️ Invalid deposit request params');
       return;
     }
