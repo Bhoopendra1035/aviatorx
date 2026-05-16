@@ -2,13 +2,11 @@
   "version": 2,
   "public": true,
   "name": "aviatorx",
-  "installCommand": "npm install",
-  "buildCommand": "cd client && npm install && npm run build",
-  "outputDirectory": "client/dist",
+  "framework": "vite",
   "rewrites": [
     {
       "source": "/(api|socket.io)(.*)",
-      "destination": "https://your-backend-url.onrender.com/$1$2"
+      "destination": "https://aviatorx-backend.onrender.com/$1$2"
     },
     {
       "source": "/(.*)",
