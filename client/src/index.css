@@ -3313,7 +3313,6 @@ input:checked + .slider:before {
     padding: 0;
     border-right: none;
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    scrollbar-width: none;
   }
 
   .profile-tabs-sidebar::-webkit-scrollbar {
@@ -3349,4 +3348,199 @@ input:checked + .slider:before {
     padding: 16px 20px;
   }
 }
+
+/* =========================================================================
+   CASHOUT TOAST NOTIFICATIONS (TOP OVERLAYS)
+   ========================================================================= */
+.cashout-toast-wrap {
+  position: fixed;
+  top: 75px; /* Just below the navbar */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+  width: 100%;
+  max-width: 440px;
+  padding: 0 16px;
+}
+
+.cashout-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(16, 24, 19, 0.96); /* Extremely deep dark green-black */
+  border: 1.5px solid rgba(44, 186, 89, 0.45); /* Elegant neon-green outline */
+  border-radius: 40px; /* High oval pill styling */
+  padding: 10px 14px 10px 24px;
+  width: 100%;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 15px rgba(44, 186, 89, 0.15);
+  pointer-events: auto;
+  animation: cashoutSlideDown 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.25) forwards;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: all 0.25s ease;
+}
+
+@keyframes cashoutSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.cashout-toast-left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  flex: 1;
+}
+
+.cashout-toast-label {
+  font-size: 13px;
+  color: #8fa696; /* Soft pastel green-gray */
+  font-weight: 500;
+  margin-bottom: 2px;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.2px;
+}
+
+.cashout-toast-mult {
+  font-size: 32px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1;
+  font-family: 'Outfit', 'Roboto', sans-serif;
+  letter-spacing: -0.5px;
+}
+
+.cashout-toast-win-pill {
+  position: relative;
+  background: linear-gradient(135deg, #42c126 0%, #249115 100%); /* Gorgeous premium green gradient */
+  border-radius: 35px;
+  padding: 8px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px;
+  overflow: hidden;
+  box-shadow: 0 4px 18px rgba(66, 193, 38, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.cashout-toast-win-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+  z-index: 2;
+  text-transform: uppercase;
+}
+
+.cashout-toast-win-amount {
+  font-size: 20px;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.1;
+  z-index: 2;
+  font-family: 'Outfit', 'Roboto', sans-serif;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Watermark Outline Stars inside the Win Capsule */
+.cashout-toast-stars {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px;
+  pointer-events: none;
+  opacity: 0.14;
+  z-index: 1;
+}
+
+.cashout-toast-stars span {
+  font-size: 26px;
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+}
+
+/* Circular Close Button on the Right */
+.cashout-toast-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  margin-left: 12px;
+  transition: all 0.2s ease;
+}
+
+.cashout-toast-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  transform: scale(1.05);
+}
+
+.cashout-toast-close:active {
+  transform: scale(0.95);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 480px) {
+  .cashout-toast-wrap {
+    top: 65px;
+    max-width: 95%;
+  }
+
+  .cashout-toast {
+    padding: 8px 10px 8px 18px;
+  }
+
+  .cashout-toast-label {
+    font-size: 11px;
+  }
+
+  .cashout-toast-mult {
+    font-size: 26px;
+  }
+
+  .cashout-toast-win-pill {
+    min-width: 130px;
+    padding: 6px 16px;
+  }
+
+  .cashout-toast-win-label {
+    font-size: 9px;
+  }
+
+  .cashout-toast-win-amount {
+    font-size: 17px;
+  }
+
+  .cashout-toast-close {
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    margin-left: 8px;
+  }
+}
+
 

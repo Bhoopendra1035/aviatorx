@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useApp, ToastContainer, BACKEND_URL } from './store';
+import { useApp, ToastContainer, CashoutToastContainer, BACKEND_URL } from './store';
 import GamePage from './pages/GamePage';
 import AuthPage from './pages/AuthPage';
 
@@ -1199,6 +1199,7 @@ export default function App() {
       </nav>
 
       <ToastContainer />
+      <CashoutToastContainer />
 
       {/* Main Single Screen Game Panel */}
       <GamePage />

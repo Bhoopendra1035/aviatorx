@@ -15,6 +15,7 @@ export interface PlayerBet { id: string; name: string; amount: number; cashedOut
 export interface TxItem { label: string; amount: number; plus: boolean; time: string; }
 export interface AdminUser { id: string; name: string; bal: number; isAdmin: boolean; }
 export interface User { name: string; email: string; isAdmin: boolean; pass?: string; }
+export interface CashoutToast { id: number; mult: number; win: number; }
 
 // ─── Backend URL Configuration ───────────────────────────────────────────────
 export const BACKEND_URL = (import.meta.env.VITE_BACKEND_URL as string) || 
@@ -46,6 +47,9 @@ interface AppCtx {
   txList: TxItem[]; addTx: (t: TxItem) => void;
   showToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   isMuted: boolean; setIsMuted: (m: boolean) => void;
+  cashoutToasts: CashoutToast[];
+  setCashoutToasts: React.Dispatch<React.SetStateAction<CashoutToast[]>>;
+  addCashoutToast: (mult: number, win: number) => void;
 }
 
 const Ctx = createContext<AppCtx>(null!);
@@ -76,6 +80,40 @@ export function ToastContainer() {
   return (
     <div className="toast-wrap">
       {toasts.map(t => <div key={t.id} className={`toast ${t.type}`}>{t.msg}</div>)}
+    </div>
+  );
+}
+
+export function CashoutToastContainer() {
+  const { cashoutToasts, setCashoutToasts } = useApp();
+
+  return (
+    <div className="cashout-toast-wrap">
+      {cashoutToasts.map(t => (
+        <div key={t.id} className="cashout-toast">
+          <div className="cashout-toast-left">
+            <div className="cashout-toast-label">You have cashed out!</div>
+            <div className="cashout-toast-mult">{t.mult.toFixed(2)}x</div>
+          </div>
+          <div className="cashout-toast-win-pill">
+            <div className="cashout-toast-win-label">WIN INR</div>
+            <div className="cashout-toast-win-amount">
+              {Number(t.win).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </div>
+            <div className="cashout-toast-stars">
+              <span>★</span>
+              <span>★</span>
+            </div>
+          </div>
+          <button 
+            className="cashout-toast-close" 
+            onClick={() => setCashoutToasts(p => p.filter(x => x.id !== t.id))}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
@@ -122,6 +160,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [adminRounds, setAdminRounds] = useState<number[]>([]);
   const [txList, setTxList] = useState<TxItem[]>([{ label: 'Welcome Bonus', amount: 1000, plus: true, time: 'Today' }]);
   const [isMuted, setIsMuted] = useState(false);
+  const [cashoutToasts, setCashoutToasts] = useState<CashoutToast[]>([]);
+
+  const addCashoutToast = useCallback((mult: number, win: number) => {
+    const id = Date.now() + Math.random();
+    setCashoutToasts(p => [...p, { id, mult, win }]);
+    setTimeout(() => {
+      setCashoutToasts(p => p.filter(t => t.id !== id));
+    }, 6000);
+  }, []);
 
   useEffect(() => {
     gameAudio.setMuted(isMuted);
@@ -204,7 +251,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
       gameAudio.playCashout();
       addTx({ label: `Cashout at ${mult.toFixed(2)}x`, amount: win, plus: true, time: '' });
-      showToast(`Cashed out at ${mult.toFixed(2)}x! Won $${win}`, 'success');
+      addCashoutToast(mult, win);
     });
 
     socket.on('betLost', ({ mult, panelId }) => {
@@ -232,7 +279,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => { socket.removeAllListeners(); socket.disconnect(); };
-  }, [showToast, addTx]);
+  }, [showToast, addTx, addCashoutToast]);
 
   const ctx: AppCtx = {
     socket, user, setUser, bal, setBal, gameState, setGameState,
@@ -242,6 +289,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     currentBet1, setCurrentBet1, currentBet2, setCurrentBet2,
     adminUsers, adminRounds, txList, addTx, showToast,
     isMuted, setIsMuted,
+    cashoutToasts, setCashoutToasts, addCashoutToast,
   };
 
   return <Ctx.Provider value={ctx}>{children}</Ctx.Provider>;
